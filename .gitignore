@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.firebase/
+.firebaserc
+CODIGO_CORRIGIDO.md
+CODIGO_CORRIGIDO.zip
+.env
+.DS_Store
