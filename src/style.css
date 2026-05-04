@@ -5,36 +5,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap');
 
 :root {
-  /* Primary — Indigo */
-  --primary-50:  #eef2ff;
-  --primary-100: #e0e7ff;
-  --primary-200: #c7d2fe;
-  --primary-400: #818cf8;
-  --primary-500: #6366f1;
-  --primary-600: #4f46e5;
-  --primary-700: #4338ca;
-  --primary-800: #3730a3;
-  --primary-900: #312e81;
+  /* Primary - Gold */
+  --primary-50:  rgba(212, 175, 55, 0.1);
+  --primary-100: rgba(212, 175, 55, 0.2);
+  --primary-200: #e5cd78;
+  --primary-400: #dfc15a;
+  --primary-500: #D4AF37;
+  --primary-600: #b8972e;
+  --primary-700: #9e8125;
+  --primary-800: #856c1d;
+  --primary-900: #6d5815;
 
-  /* Accent — Violet */
-  --accent-50:  #f5f3ff;
-  --accent-100: #ede9fe;
-  --accent-400: #a78bfa;
-  --accent-500: #8b5cf6;
-  --accent-600: #7c3aed;
-  --accent-700: #6d28d9;
+  /* Accent - Lighter Gold */
+  --accent-50:  rgba(241, 213, 146, 0.1);
+  --accent-100: rgba(241, 213, 146, 0.2);
+  --accent-400: #f4dfa8;
+  --accent-500: #f1d592;
+  --accent-600: #d6bb7b;
+  --accent-700: #b59d64;
 
-  /* Surface */
-  --surface-50:  #f8fafc;
-  --surface-100: #f1f5f9;
-  --surface-200: #e2e8f0;
-  --surface-300: #cbd5e1;
-  --surface-400: #94a3b8;
+  /* Surface - Dark Navy */
+  --surface-0:   #0A192F;
+  --surface-50:  #112240;
+  --surface-100: rgba(212, 175, 55, 0.2);
+  --surface-200: rgba(212, 175, 55, 0.4);
+  --surface-300: #233554;
+  --surface-400: #495670;
 
-  /* Text */
-  --text-primary:   #0f172a;
-  --text-secondary: #475569;
-  --text-muted:     #94a3b8;
+  /* Text - Light */
+  --text-primary:   #ffffff;
+  --text-secondary: #ccd6f6;
+  --text-muted:     #8892b0;
 
   /* Success / Error / Warning */
   --success-500: #22c55e;
@@ -43,9 +44,9 @@
   --warning-500: #f59e0b;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.25);
 
   /* Border radius */
   --radius-sm: 8px;
@@ -59,7 +60,7 @@
 html { scroll-behavior: smooth; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f8fafc;
+  background: #050C16;
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -100,7 +101,7 @@ a { color: inherit; }
 }
 .btn-outline-primary:hover { background: var(--primary-50); }
 .btn-outline-light {
-  background: white; color: var(--text-secondary);
+  background: var(--surface-0); color: var(--text-secondary);
   border-color: var(--surface-200); box-shadow: var(--shadow-sm);
 }
 .btn-outline-light:hover { background: var(--surface-50); }
@@ -114,7 +115,7 @@ a { color: inherit; }
 
 /* ---- Cards ---- */
 .card {
-  background: white; border-radius: var(--radius-xl);
+  background: var(--surface-0); border-radius: var(--radius-xl);
   border: 1px solid var(--surface-100); box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s;
 }
@@ -141,7 +142,7 @@ a { color: inherit; }
 .form-input {
   width: 100%; padding: 12px 16px; border: 1.5px solid var(--surface-200);
   border-radius: var(--radius-md); font-size: 14px; color: var(--text-primary);
-  background: white; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  background: var(--surface-0); outline: none; transition: border-color 0.2s, box-shadow 0.2s;
 }
 .form-input:focus {
   border-color: var(--primary-400);
@@ -159,7 +160,7 @@ select.form-input { cursor: pointer; }
 }
 .modal-overlay.in-view { opacity: 1; }
 .modal {
-  background: white; border-radius: var(--radius-xl); padding: 36px;
+  background: var(--surface-0); border-radius: var(--radius-xl); padding: 36px;
   width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
   box-shadow: 0 24px 64px rgba(0,0,0,0.2);
   transform: translateY(20px); transition: transform 0.3s;
@@ -225,7 +226,7 @@ select.form-input { cursor: pointer; }
 
 /* ---- Sidebar ---- */
 .sidebar-nav {
-  background: white; border-radius: var(--radius-xl); padding: 16px;
+  background: var(--surface-0); border-radius: var(--radius-xl); padding: 16px;
   border: 1px solid var(--surface-100); box-shadow: var(--shadow-sm);
   display: flex; flex-direction: column; gap: 4px;
 }
