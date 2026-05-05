@@ -3,7 +3,6 @@
 // =============================================
 
 import './style.css';
-import './index.css';
 import { initAuth, onAuthChange, getCurrentUser, getCurrentUserData } from './services/auth.js';
 import { addRoute, initRouter, navigate, setNotFound } from './router.js';
 import { renderNavbar } from './components/navbar.js';
