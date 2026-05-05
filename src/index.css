@@ -1,75 +1,90 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Outfit:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
-:root {
-  --primary: #D4AF37;
-  --secondary: #0A192F;
-  --background: #050C16;
-  --foreground: #ffffff;
-  --muted: #8892b0;
-  --card: rgba(10, 25, 47, 0.7);
-  --border: rgba(212, 175, 55, 0.2);
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-heading: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+
+    --background: 40 20% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 222 47% 18%;
+    --primary-foreground: 40 20% 98%;
+    --secondary: 40 30% 94%;
+    --secondary-foreground: 222 47% 18%;
+    --muted: 40 15% 95%;
+    --muted-foreground: 222 20% 45%;
+    --accent: 43 74% 49%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 15% 89%;
+    --input: 40 15% 89%;
+    --ring: 222 47% 18%;
+    --chart-1: 222 47% 18%;
+    --chart-2: 43 74% 49%;
+    --chart-3: 173 58% 39%;
+    --chart-4: 12 76% 61%;
+    --chart-5: 280 65% 60%;
+    --radius: 0.75rem;
+    --sidebar-background: 222 47% 12%;
+    --sidebar-foreground: 40 20% 95%;
+    --sidebar-primary: 43 74% 49%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 47% 18%;
+    --sidebar-accent-foreground: 40 20% 95%;
+    --sidebar-border: 222 30% 22%;
+    --sidebar-ring: 43 74% 49%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 40 20% 95%;
+    --card: 222 47% 9%;
+    --card-foreground: 40 20% 95%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 40 20% 95%;
+    --primary: 43 74% 49%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 222 30% 15%;
+    --secondary-foreground: 40 20% 95%;
+    --muted: 222 30% 15%;
+    --muted-foreground: 40 15% 60%;
+    --accent: 43 74% 49%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 43 74% 49%;
+    --chart-1: 43 74% 49%;
+    --chart-2: 222 47% 50%;
+    --chart-3: 173 58% 39%;
+    --chart-4: 12 76% 61%;
+    --chart-5: 280 65% 60%;
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 40 20% 95%;
+    --sidebar-primary: 43 74% 49%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 47% 12%;
+    --sidebar-accent-foreground: 40 20% 95%;
+    --sidebar-border: 222 30% 15%;
+    --sidebar-ring: 43 74% 49%;
+  }
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: var(--background);
-  color: var(--foreground);
-  line-height: 1.6;
-  overflow-x: hidden;
-}
-
-h1, h2, h3, h4 {
-  font-family: 'Outfit', sans-serif;
-}
-
-.glass-panel {
-  background: var(--card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-}
-
-.text-gradient {
-  background: linear-gradient(to right, #D4AF37, #f1d592);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.btn-primary {
-  background-color: var(--primary);
-  color: var(--secondary);
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  display: inline-block;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
-}
-
-section {
-  padding: 5rem 1rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.nav-link {
-  color: var(--foreground);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.nav-link:hover {
-  color: var(--primary);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+  }
 }

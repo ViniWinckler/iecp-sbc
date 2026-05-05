@@ -1,0 +1,209 @@
+
+
+=== SECTION 0 ===
+<section class="hero-section">
+        <div class="hero-bg" id="hero-carousel">
+           <div class="hero-slide active">
+             <img src="https://images.unsplash.com/photo-1438232992991-995b7058bbb3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" alt="Igreja Gathering" loading="lazy" />
+           </div>
+           <div class="hero-slide">
+             <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" alt="Worship" loading="lazy" />
+           </div>
+           <div class="hero-slide">
+             <img src="https://images.unsplash.com/photo-1504052434569-70ad5836ab65?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" alt="Bible" loading="lazy" />
+           </div>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="container hero-content">
+           <div class="section-label reveal-up delay-1">
+              ✦ Seja bem-vindo
+              <span class="gold-line gold-line-anim delay-2" style="display:inline-block; vertical-align:middle; margin-left:12px;"></span>
+           </div>
+           <h1 class="hero-title">
+             <span class="hero-title-line delay-2"><span>IECP SBC</span></span>
+             <span class="hero-title-line delay-3"><span>Jd. Ipanema</span></span>
+           </h1>
+           <p class="reveal-up delay-4" style="color: rgba(255,255,255,0.8); max-width: 500px; font-size: 1.125rem;">
+             Uma igreja viva, servindo a comunidade com amor e esperança em São Bernardo do Campo.
+           </p>
+           <div class="reveal-up delay-4" style="margin-top: 32px; display: flex; gap: 16px;">
+             <a href="#onde-estamos" class="btn btn-primary" onclick="setTimeout(() => window.location.hash = '#/', 50)">Planeje sua Visita</a>
+             <a data-route="/quem-somos" class="btn btn-outline-light">Nossa História</a>
+           </div>
+        </div>
+        <div class="hero-controls" style="padding-bottom: 24px;">
+           <div class="hero-dots" id="hero-dots">
+              <div class="hero-dot active" data-index="0"></div>
+              <div class="hero-dot" data-index="1"></div>
+              <div class="hero-dot" data-index="2"></div>
+           </div>
+           <div class="hero-slide-counter" style="color: rgba(255,255,255,0.6); font-family: monospace; font-size: 14px;">01 / 03</div>
+        </div>
+        <div class="scroll-indicator">
+           Scroll <span class="material-symbols-rounded">expand_more</span>
+        </div>
+      </section>
+
+=== SECTION 1 ===
+<section class="verse-section section-py">
+         <span class="material-symbols-rounded verse-watermark">menu_book</span>
+         <div class="container" style="position:relative; z-index:2;">
+            <div style="display:flex; align-items:center; justify-content:center; gap: 16px; margin-bottom: 24px;">
+               <div class="gold-line gold-line-anim" style="width: 40px;"></div>
+               <span class="section-label" style="margin:0; color:var(--accent-300);">Palavra do Dia</span>
+               <div class="gold-line gold-line-anim" style="width: 40px;"></div>
+            </div>
+            <p class="verse-text reveal-up">
+              "Porque eu bem sei os pensamentos que tenho a vosso respeito, diz o Senhor; pensamentos de paz, e não de mal, para vos dar o fim que esperais."
+            </p>
+            <div class="reveal-up delay-1" style="color: var(--accent-500); font-weight: 700; margin-top: 24px; letter-spacing: 1px;">
+              JEREMIAS 29:11
+            </div>
+         </div>
+      </section>
+
+=== SECTION 2 ===
+<section class="section-py" style="background: var(--surface-50);">
+         <div class="container">
+            <div style="text-align: center; margin-bottom: var(--space-3xl);">
+               <span class="section-label reveal-up">Programação</span>
+               <h2 class="reveal-up delay-1" style="font-size: 2.5rem;">Nossos Cultos</h2>
+               <div class="gold-line gold-line-anim reveal-up delay-2" style="margin: 16px auto 0;"></div>
+            </div>
+            <div class="times-grid">
+               <div class="time-card reveal-up delay-1">
+                  <div class="time-icon"><span class="material-symbols-rounded" style="font-size:24px;">wb_sunny</span></div>
+                  <div class="time-day">Domingo Manhã</div>
+                  <div class="time-value">09:00</div>
+                  <p style="color: var(--text-secondary); font-size: 0.875rem;">Escola Dominical e Culto Matutino</p>
+               </div>
+               <div class="time-card reveal-up delay-2">
+                  <div class="time-icon"><span class="material-symbols-rounded" style="font-size:24px;">nights_stay</span></div>
+                  <div class="time-day">Domingo Noite</div>
+                  <div class="time-value">18:00</div>
+                  <p style="color: var(--text-secondary); font-size: 0.875rem;">Culto de Celebração da Família</p>
+               </div>
+               <div class="time-card reveal-up delay-3">
+                  <div class="time-icon"><span class="material-symbols-rounded" style="font-size:24px;">local_fire_department</span></div>
+                  <div class="time-day">Quarta-Feira</div>
+                  <div class="time-value">19:30</div>
+                  <p style="color: var(--text-secondary); font-size: 0.875rem;">Culto de Oração e Doutrina</p>
+               </div>
+            </div>
+         </div>
+      </section>
+
+=== SECTION 3 ===
+<section class="stats-section section-py">
+         <div class="container stats-grid">
+            <div class="stat-item scale-in delay-1">
+               <div class="stat-num">+40</div>
+               <div class="stat-label">Anos de História</div>
+            </div>
+            <div class="stat-item scale-in delay-2">
+               <div class="stat-num">300</div>
+               <div class="stat-label">Membros</div>
+            </div>
+            <div class="stat-item scale-in delay-3">
+               <div class="stat-num">12</div>
+               <div class="stat-label">Ministérios Ativos</div>
+            </div>
+            <div class="stat-item scale-in delay-4">
+               <div class="stat-num">1</div>
+               <div class="stat-label">Propósito Maior</div>
+            </div>
+         </div>
+      </section>
+
+=== SECTION 4 ===
+<section class="split-section section-py" style="background: var(--surface-0);">
+         <div class="container">
+            <div>
+               <span class="section-label reveal-up">Quem Somos</span>
+               <h2 class="reveal-up delay-1" style="font-size: 3rem; margin-bottom: 24px; color: var(--primary-800);">Uma História de Fé e Dedicação</h2>
+               <p class="reveal-up delay-2" style="color: var(--text-secondary); margin-bottom: 32px; font-size: 1.125rem;">
+                 A Primeira Igreja Evangélica Cristã Presbiteriana do Jardim Ipanema iniciou sua trajetória servindo a comunidade com um ensino fiel às Escrituras. <br/><br/>
+                 Nossa missão é acolher famílias, ensinar a Palavra e servir a sociedade de São Bernardo do Campo como um farol de amor.
+               </p>
+               <a data-route="/quem-somos" class="btn btn-primary reveal-up delay-3">
+                 <span style="margin-right: 8px;">Conheça Nossa História</span>
+                 <span class="material-symbols-rounded" style="font-size:20px;">arrow_forward</span>
+               </a>
+            </div>
+            <div class="split-image-wrapper reveal-up delay-2">
+               <div class="split-image-deco"></div>
+               <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Comunidade" />
+            </div>
+         </div>
+      </section>
+
+=== SECTION 5 ===
+<section id="onde-estamos" class="section-py" style="background: var(--surface-0);">
+         <div class="container">
+            <div style="text-align: center; margin-bottom: var(--space-3xl);">
+               <span class="section-label reveal-up">Localização</span>
+               <h2 class="reveal-up delay-1" style="font-size: 2.5rem;">Onde Estamos</h2>
+               <div class="gold-line gold-line-anim reveal-up delay-2" style="margin: 16px auto 0;"></div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 48px; align-items: stretch;">
+              <div class="reveal-up delay-2">
+                <div class="card" style="height: 100%; background: white; border: 1px solid var(--surface-200); box-shadow: var(--shadow-sm);">
+                  <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                    <div class="stat-card-icon" style="flex-shrink: 0; width: 40px; height: 40px; background: var(--primary-50); color: var(--primary-600);">
+                      <span class="material-symbols-rounded">location_on</span>
+                    </div>
+                    <div>
+                      <h3 style="font-size: 18px; margin-bottom: 4px; font-weight: 700;">Nosso Endereço</h3>
+                      <p style="color: var(--text-secondary); font-size: 15px;">Estrada dos Casa, 3860<br>Jd. Ipanema, São Bernardo do Campo - SP<br>CEP 09840-630</p>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                    <div class="stat-card-icon" style="flex-shrink: 0; width: 40px; height: 40px; background: #e6f4ea; color: #1e8e3e;">
+                      <span class="material-symbols-rounded">schedule</span>
+                    </div>
+                    <div>
+                      <h3 style="font-size: 18px; margin-bottom: 4px; font-weight: 700;">Horários</h3>
+                      <p style="color: var(--text-secondary); font-size: 15px;">Domingos: 09h00 e 18h00<br>Quartas: 19h30</p>
+                    </div>
+                  </div>
+
+                  <a href="https://www.google.com/maps/dir/?api=1&destination=Estrada+dos+Casa+3860+SBC" target="_blank" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
+                    <span class="material-symbols-rounded">map</span>
+                    Traçar Rota no Mapa
+                  </a>
+                </div>
+              </div>
+
+              <div class="reveal-up delay-3" style="min-height: 400px;">
+                 <div class="card" style="padding: 0; overflow: hidden; height: 100%; background: white; border: 1px solid var(--surface-300); box-shadow: var(--shadow-sm);">
+                   <iframe 
+                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3654.5!2d-46.58!3d-23.72!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce44!2sEstrada%20dos%20Casa%2C%203860%20-%20Jardim%20Ipanema%2C%20S%C3%A3o%20Bernardo%20do%20Campo%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1620000000000!5m2!1spt-BR!2sbr" 
+                     width="100%" 
+                     height="100%" 
+                     style="border:0; min-height: 400px;" 
+                     allowfullscreen="" 
+                     loading="lazy">
+                   </iframe>
+                 </div>
+              </div>
+            </div>
+         </div>
+      </section>
+
+=== SECTION 6 ===
+<section class="section-py" style="background: white;">
+         <div class="container">
+            <div style="text-align: center; margin-bottom: var(--space-3xl);">
+               <span class="section-label reveal-up">Agenda</span>
+               <h2 class="reveal-up delay-1" style="font-size: 2.5rem;">Próximos Eventos</h2>
+               <div class="gold-line gold-line-anim reveal-up delay-2" style="margin: 16px auto 0;"></div>
+            </div>
+            <div id="public-eventos-feed" class="times-grid" style="max-width: 900px; margin: 0 auto;">
+               <div class="reveal-up" style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 32px;">
+                  Carregando eventos...
+               </div>
+            </div>
+         </div>
+      </section>

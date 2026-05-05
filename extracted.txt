@@ -1,0 +1,19 @@
+
+
+=== HOME ===
+[NOT FOUND: renderHomePublicPage]
+
+=== NAVBAR ===
+[NOT FOUND: pub-navbar]
+
+=== LOGIN ===
+[NOT FOUND: login-page]
+
+=== CONTACT ===
+[NOT FOUND: renderContactPage]
+
+=== EVENTS ===
+[NOT FOUND: renderEventsPage]
+
+=== ABOUT ===
+[NOT FOUND: renderAboutUsPage]

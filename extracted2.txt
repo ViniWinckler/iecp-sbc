@@ -1,0 +1,30 @@
+
+
+=== NOT FOUND: Uma comunidade ===
+
+
+=== NOT FOUND: viva em Cristo ===
+
+
+=== NOT FOUND: Acesse escalas, avisos e projetos ===
+
+
+=== NOT FOUND: Nossa Igreja ===
+
+
+=== NOT FOUND: Faça parte da família ===
+
+
+=== FOUND: Próximos Eventos ===
+="lazy">
+                   </iframe>
+                 </div>
+              </div>
+            </div>
+         </div>
+      </section>
+
+      <!-- 7. Próximos Eventos (Dinâmico do Firebase) -->
+      <section class="section-py" style="background: white;">
+         <div class="container">
+           
