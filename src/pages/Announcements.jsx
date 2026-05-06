@@ -19,6 +19,7 @@ export default function Announcements() {
   const [memberships, setMemberships] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [isLeaderOrAdmin, setIsLeaderOrAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [newTitle, setNewTitle] = useState("");
   const [newMessage, setNewMessage] = useState("");
@@ -46,6 +47,7 @@ export default function Announcements() {
     setAnnouncements(filtered);
     setMinistries(allMinistries);
     setMemberships(myMemberships);
+    setIsLoading(false);
   };
 
   const handleCreate = async () => {
@@ -116,7 +118,13 @@ export default function Announcements() {
         )}
       </div>
 
-      {announcements.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-28 bg-muted animate-pulse rounded-xl border border-border" />
+          ))}
+        </div>
+      ) : announcements.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <Megaphone className="w-12 h-12 mx-auto mb-4 opacity-40" />
           <p className="text-lg">Nenhum aviso publicado</p>
