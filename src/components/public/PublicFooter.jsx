@@ -45,7 +45,9 @@ export default function PublicFooter() {
           {/* Col 1 — Logo + Descrição + Endereço */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-5">
-              <img src="/logo.png" alt="IECP SBC" className="w-12 h-auto" />
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 text-white mb-4">
+                <Church className="w-7 h-7" />
+              </div>
               <div>
                 <span className="font-heading text-lg font-bold tracking-wide block">IECP SBC</span>
                 <span className="text-white/50 text-xs uppercase tracking-widest">Jd. Ipanema</span>
