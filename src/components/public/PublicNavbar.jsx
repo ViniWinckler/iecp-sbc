@@ -80,14 +80,14 @@ export default function PublicNavbar() {
                     className={`relative px-4 py-2 text-sm font-semibold transition-colors duration-200 uppercase tracking-wide group ${textColor}`}
                   >
                     {link.label}
-                    {/* Solid Line (Gray default, Orange on Hover/Active) */}
+                    {/* Animated Line (Invisible default, Gray on hover, Orange when active) */}
                     <span 
-                      className={`absolute left-4 right-4 bottom-0 h-[2px] transition-colors duration-300 ${
+                      className={`absolute left-4 right-4 bottom-0 h-[2px] transition-all duration-300 origin-left ${
                         active 
-                          ? "bg-accent" 
+                          ? "bg-accent scale-x-100 opacity-100" 
                           : transparent 
-                            ? "bg-white/20 group-hover:bg-accent" 
-                            : "bg-gray-300 group-hover:bg-accent"
+                            ? "bg-white/40 scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100" 
+                            : "bg-gray-300 scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100"
                       }`} 
                     />
                   </Link>
