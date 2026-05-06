@@ -5,13 +5,13 @@ import { Link } from "react-router-dom";
 
 const defaultBanners = [
   {
-    title: "Um Lugar de\nFé e Amor",
-    subtitle: "Venha fazer parte da nossa família. Aqui você é bem-vindo.",
+    title: "IECP SBC\nJd. Ipanema",
+    subtitle: "Uma igreja viva, servindo a comunidade com amor e esperança em São Bernardo do Campo.",
     image_url: "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=1920&h=1080&fit=crop&q=90",
   },
   {
     title: "Transformando\nVidas pela Fé",
-    subtitle: "Cultos aos domingos às 9h e 19h. Venha nos visitar!",
+    subtitle: "Cultos aos domingos às 9h e 18h. Venha nos visitar!",
     image_url: "https://images.unsplash.com/photo-1477281765962-ef34e8bb0967?w=1920&h=1080&fit=crop&q=90",
   },
   {
@@ -132,22 +132,22 @@ export default function HeroBanner({ banners = [] }) {
               transition={{ delay: 0.9 }}
               className="flex flex-col sm:flex-row gap-4"
             >
-              <Link to="/quem-somos">
+              <Link to="/localizacao">
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
                   className="px-8 py-4 bg-accent text-accent-foreground font-semibold rounded-sm text-sm tracking-wider uppercase hover:bg-accent/90 transition-colors"
                 >
-                  Conheça Nossa Igreja
+                  Planeje sua visita
                 </motion.button>
               </Link>
-              <Link to="/localizacao">
+              <Link to="/quem-somos">
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
                   className="px-8 py-4 border border-white/40 text-white font-semibold rounded-sm text-sm tracking-wider uppercase hover:bg-white/10 transition-colors"
                 >
-                  Como Chegar
+                  Nossa História
                 </motion.button>
               </Link>
             </motion.div>

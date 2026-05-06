@@ -13,6 +13,7 @@ import AboutUs from './pages/AboutUs';
 import PublicEvents from './pages/PublicEvents';
 import Location from './pages/Location';
 import Contact from './pages/Contact';
+import Dizimos from './pages/Dizimos';
 import MemberLogin from './pages/MemberLogin';
 import Dashboard from './pages/Dashboard';
 import Schedules from './pages/Schedules';
@@ -54,6 +55,7 @@ const AuthenticatedApp = () => {
         <Route path="/quem-somos" element={<AboutUs />} />
         <Route path="/eventos" element={<PublicEvents />} />
         <Route path="/localizacao" element={<Location />} />
+        <Route path="/dizimos" element={<Dizimos />} />
         <Route path="/contato" element={<Contact />} />
       </Route>
       <Route path="/login" element={<MemberLogin />} />

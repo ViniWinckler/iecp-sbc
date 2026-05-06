@@ -34,9 +34,9 @@ export default function AboutUs() {
       <div className="bg-primary text-primary-foreground py-16 px-5 sm:px-8">
         <div className="max-w-6xl mx-auto">
           <p className="text-accent text-sm font-medium tracking-widest uppercase mb-2">
-            Nossa comunidade
+            Quem Somos
           </p>
-          <h1 className="font-heading text-4xl sm:text-5xl font-bold">Quem Somos</h1>
+          <h1 className="font-heading text-4xl sm:text-5xl font-bold">Um lugar de recomeços e fé em São Bernardo.</h1>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
-import { Clock, BookOpen, ArrowRight, MapPin, Heart, Users, Star } from "lucide-react";
+import { Clock, BookOpen, ArrowRight, MapPin, Heart, Users, Star, Sun, Moon, Flame } from "lucide-react";
 import HeroBanner from "../components/public/HeroBanner";
 import { getEventosPublicos } from "../services/db";
 
@@ -69,9 +69,9 @@ export default function Home() {
     }
   ]);
   const [serviceTimes, setServiceTimes] = useState([
-    { id: "1", day_of_week: "Domingo", time: "09:00", name: "Culto Matutino e EBD" },
-    { id: "2", day_of_week: "Domingo", time: "18:00", name: "Culto de Celebração" },
-    { id: "3", day_of_week: "Quarta", time: "19:30", name: "Culto de Oração" }
+    { id: "1", day_of_week: "Domingo Manhã", time: "09:00", name: "Escola Dominical e Culto Matutino", icon: Sun },
+    { id: "2", day_of_week: "Domingo Noite", time: "18:00", name: "Culto de Celebração da Família", icon: Moon },
+    { id: "3", day_of_week: "Quarta-Feira", time: "19:30", name: "Culto de Oração e Doutrina", icon: Flame }
   ]);
   const [verse, setVerse] = useState({
     text: "Porque eu bem sei os pensamentos que tenho a vosso respeito, diz o Senhor; pensamentos de paz, e não de mal, para vos dar o fim que esperais.",
@@ -135,7 +135,7 @@ export default function Home() {
                   className="border border-border rounded-sm p-8 text-center bg-card cursor-default transition-colors hover:border-accent/50"
                 >
                   <div className="w-12 h-12 rounded-full bg-primary/8 flex items-center justify-center mx-auto mb-5">
-                    <Clock className="w-5 h-5 text-primary" />
+                    <st.icon className="w-5 h-5 text-primary" />
                   </div>
                   <p className="text-accent font-semibold text-sm tracking-wider uppercase">{st.day_of_week}</p>
                   <p className="font-heading text-4xl font-bold text-foreground mt-2">{st.time}</p>
@@ -181,10 +181,10 @@ export default function Home() {
           <AnimatedSection delay={0}>
             <span className="inline-flex items-center gap-2 text-accent text-xs font-semibold tracking-[0.25em] uppercase mb-4">
               <span className="w-6 h-px bg-accent inline-block" />
-              Nossa história
+              Quem Somos
             </span>
             <h2 className="font-heading text-4xl sm:text-5xl font-bold leading-tight mb-6">
-              Servindo à comunidade com amor e fé
+              Uma História de Fé e Dedicação
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               Somos uma Igreja comprometida com a Palavra de Deus, acolhendo famílias e transformando vidas através do evangelho de Cristo.
@@ -195,9 +195,9 @@ export default function Home() {
             <Link to="/quem-somos">
               <motion.button
                 whileHover={{ gap: "16px" }}
-                className="inline-flex items-center gap-3 text-primary font-semibold group"
+                className="inline-flex items-center gap-3 text-primary font-semibold group uppercase tracking-wider text-sm"
               >
-                Conheça nossa história
+                Conheça Nossa História
                 <motion.span
                   initial={{ x: 0 }}
                   whileHover={{ x: 4 }}
@@ -231,7 +231,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Join Us CTA */}
+      {/* Onde Estamos */}
       <section className="relative py-24 px-6 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center bg-fixed"
@@ -240,8 +240,8 @@ export default function Home() {
               "url(https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=1600&h=900&fit=crop&q=80)",
           }}
         />
-        <div className="absolute inset-0 bg-black/75" />
-        <div className="relative z-10 max-w-3xl mx-auto text-center">
+        <div className="absolute inset-0 bg-black/80" />
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
           <AnimatedSection>
             <motion.div
               initial={{ scaleX: 0 }}
@@ -250,35 +250,43 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               className="w-16 h-0.5 bg-accent mx-auto mb-8"
             />
-            <p className="text-accent text-sm font-semibold tracking-[0.3em] uppercase mb-4">
-              Junte-se a nós
+            <p className="text-accent text-sm font-semibold tracking-[0.3em] uppercase mb-4 flex items-center justify-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Onde Estamos
             </p>
-            <h2 className="font-heading text-4xl sm:text-5xl font-bold text-white mb-6">
-              Você é bem-vindo aqui
+            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white mb-8">
+              Estrada dos Casa, 3860<br/>
+              <span className="text-xl sm:text-2xl font-normal text-white/80 mt-2 block">
+                Jd. Ipanema, São Bernardo do Campo - SP, CEP 09840-630
+              </span>
             </h2>
-            <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-              Não importa quem você é ou de onde vem — nossa porta está aberta. Venha nos visitar neste domingo!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/localizacao">
+            
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center text-white/80 mb-10">
+              <div className="flex items-center gap-2">
+                <Sun className="w-5 h-5 text-accent" />
+                <span>Domingos: 09h00</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Moon className="w-5 h-5 text-accent" />
+                <span>Domingos: 18h00</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-accent" />
+                <span>Quartas: 19h30</span>
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <a href="https://www.google.com/maps/dir/?api=1&destination=-23.7380,-46.5833" target="_blank" rel="noopener noreferrer">
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
-                  className="px-8 py-4 bg-accent text-accent-foreground font-semibold text-sm tracking-wider uppercase rounded-sm"
+                  className="px-8 py-4 bg-accent text-accent-foreground font-semibold text-sm tracking-wider uppercase rounded-sm flex items-center gap-2"
                 >
-                  <MapPin className="w-4 h-4 inline mr-2" />
-                  Como Chegar
+                  <MapPin className="w-4 h-4" />
+                  Traçar Rota no Mapa
                 </motion.button>
-              </Link>
-              <Link to="/contato">
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="px-8 py-4 border border-white/40 text-white font-semibold text-sm tracking-wider uppercase rounded-sm hover:bg-white/10 transition-colors"
-                >
-                  Fale Conosco
-                </motion.button>
-              </Link>
+              </a>
             </div>
           </AnimatedSection>
         </div>

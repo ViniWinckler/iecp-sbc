@@ -7,7 +7,7 @@ const navLinks = [
   { path: "/", label: "Início" },
   { path: "/quem-somos", label: "Quem Somos" },
   { path: "/eventos", label: "Eventos" },
-  { path: "/localizacao", label: "Localização" },
+  { path: "/dizimos", label: "Dízimos" },
   { path: "/contato", label: "Contato" },
 ];
 
@@ -16,15 +16,15 @@ export default function PublicNavbar() {
   const location = useLocation();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-border/50">
       <div className="max-w-6xl mx-auto px-5 sm:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-3">
             <div className="w-8 h-8 rounded bg-primary flex items-center justify-center">
               <Church className="w-4 h-4 text-white" />
             </div>
-            <span className="font-heading text-base font-semibold text-foreground tracking-wide">
-              Nossa Igreja
+            <span className="font-heading text-lg font-bold text-foreground tracking-wide">
+              IECP SBC
             </span>
           </Link>
 
@@ -43,7 +43,8 @@ export default function PublicNavbar() {
               </Link>
             ))}
             <Link to="/login">
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white px-5">
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white px-5 gap-2 font-medium tracking-wide">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 Área do Membro
               </Button>
             </Link>
