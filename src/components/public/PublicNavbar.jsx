@@ -47,19 +47,15 @@ export default function PublicNavbar() {
           <div className="flex items-center justify-between h-[70px]">
 
             {/* ── Logo ── */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <motion.div
-                whileHover={{ scale: 1.08, rotate: 2 }}
-                className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center shadow-md shrink-0"
-              >
-                <Church className="w-5 h-5 text-accent-foreground" />
-              </motion.div>
-              <div className="leading-tight">
-                <span className="font-heading text-base font-bold text-white tracking-wide block">
+            <Link
+              to="/"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="flex items-center gap-3 group"
+            >
+              <img src="/logo.png" alt="IECP SBC Logo" className="w-11 h-auto" />
+              <div className="leading-tight hidden sm:block">
+                <span className="font-heading text-base font-bold text-white tracking-wide block transition-colors group-hover:text-accent">
                   IECP SBC
-                </span>
-                <span className="text-[10px] text-white/50 uppercase tracking-[0.18em] font-medium">
-                  Jd. Ipanema
                 </span>
               </div>
             </Link>
@@ -72,29 +68,30 @@ export default function PublicNavbar() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className="relative px-4 py-2 text-sm font-medium transition-colors duration-200 text-white/80 hover:text-white"
+                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    className={`relative px-4 py-2 text-sm font-medium transition-colors duration-200 uppercase tracking-wide group ${
+                      active ? "text-white" : "text-white/80 hover:text-white"
+                    }`}
                   >
                     {link.label}
-                    {active && (
-                      <motion.span
-                        layoutId="activeBar"
-                        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-accent rounded-full"
-                      />
-                    )}
+                    {/* Hover Animated Dashed Line */}
+                    <span className={`absolute left-4 right-4 bottom-1 h-[2px] overflow-hidden ${active ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity duration-300`}>
+                       <span className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMCcgaGVpZ2h0PScnJz48cmVjdCB3aWR0aD0nNicgaGVpZ2h0PScnJyBmaWxsPScjZjZiNzNkJy8+PC9zdmc+')] animate-[dash_1s_linear_infinite]" />
+                    </span>
                   </Link>
                 );
               })}
 
               {/* CTA button */}
-              <Link to="/login" className="ml-4">
+              <Link to="/login" className="ml-4" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
                 <motion.button
                   whileHover={{ scale: 1.04, backgroundColor: "hsl(43,74%,55%)" }}
                   whileTap={{ scale: 0.97 }}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg shadow-sm transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-accent text-accent-foreground text-sm font-bold uppercase tracking-wider rounded-lg shadow-sm transition-colors relative group overflow-hidden"
                   style={{ backgroundColor: "hsl(43,74%,49%)" }}
                 >
                   <User className="w-4 h-4" />
-                  Área do Membro
+                  ÁREA DO MEMBRO
                 </motion.button>
               </Link>
             </div>
