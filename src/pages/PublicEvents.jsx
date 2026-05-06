@@ -26,7 +26,7 @@ export default function PublicEvents() {
           style={{ backgroundImage: "url(https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1600&h=600&fit=crop)" }}
         />
         <div className="absolute inset-0 bg-primary/75" />
-        <div className="relative z-10 h-full flex items-center justify-center text-center px-4">
+        <div className="relative z-10 h-full flex items-center justify-center text-center px-4 pt-16">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <p className="text-accent text-xs font-semibold tracking-[0.25em] uppercase mb-3">Agenda Local</p>
             <h1 className="font-heading text-4xl sm:text-5xl font-bold text-white mb-2">Eventos IECP SBC</h1>
