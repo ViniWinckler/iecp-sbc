@@ -36,8 +36,7 @@ export default function PublicNavbar() {
   const transparent = isHome && !scrolled && !open;
 
   // Text color depends on navbar state
-  const textColor = transparent ? "text-white hover:text-white/80" : "text-primary hover:text-primary/70";
-  const activeColor = transparent ? "text-white" : "text-accent";
+  const textColor = transparent ? "text-white/90 hover:text-white" : "text-primary/80 hover:text-primary";
 
   return (
     <>
@@ -78,15 +77,15 @@ export default function PublicNavbar() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`relative px-4 py-2 text-sm font-medium transition-colors duration-200 uppercase tracking-wide group ${
-                      active ? activeColor : textColor
-                    }`}
+                    className={`relative px-4 py-2 text-sm font-semibold transition-colors duration-200 uppercase tracking-wide group ${textColor}`}
                   >
                     {link.label}
-                    {/* Hover Animated Dashed Line */}
-                    <span className={`absolute left-4 right-4 bottom-1 h-[2px] overflow-hidden ${active ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity duration-300`}>
-                       <span className={`absolute inset-0 animate-[dash_1s_linear_infinite] ${transparent ? "bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMCcgaGVpZ2h0PScnJz48cmVjdCB3aWR0aD0nNicgaGVpZ2h0PScnJyBmaWxsPScjZmZmZmZmJy8+PC9zdmc+')]" : "bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMCcgaGVpZ2h0PScnJz48cmVjdCB3aWR0aD0nNicgaGVpZ2h0PScnJyBmaWxsPScjZjZiNzNkJy8+PC9zdmc+')]"} `} />
-                    </span>
+                    {/* Hover & Active Solid Orange Line */}
+                    <span 
+                      className={`absolute left-4 right-4 bottom-0 h-[2px] bg-accent transition-all duration-300 ${
+                        active ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-100"
+                      } origin-left`} 
+                    />
                   </Link>
                 );
               })}
