@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import moment from "moment";
+import "moment/locale/pt-br";
+import { getEventosPublicos } from "@/services/db";
+
+moment.locale("pt-br");
 
 export default function PublicEvents() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.Event.filter({ is_public: true }, "-date")
+    getEventosPublicos()
       .then(setEvents)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -20,23 +23,24 @@ export default function PublicEvents() {
       <div className="relative h-64 sm:h-72 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: "url(https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1600&h=600&fit=crop)",
-          }}
+          style={{ backgroundImage: "url(https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1600&h=600&fit=crop)" }}
         />
-        <div className="absolute inset-0 bg-primary/70" />
+        <div className="absolute inset-0 bg-primary/75" />
         <div className="relative z-10 h-full flex items-center justify-center text-center px-4">
-          <div>
-            <h1 className="font-heading text-4xl sm:text-5xl font-bold text-white mb-2">Eventos</h1>
-            <p className="text-white/70 text-lg">Próximos eventos abertos ao público</p>
-          </div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <p className="text-accent text-xs font-semibold tracking-[0.25em] uppercase mb-3">Agenda Local</p>
+            <h1 className="font-heading text-4xl sm:text-5xl font-bold text-white mb-2">Eventos IECP SBC</h1>
+            <p className="text-white/70 text-lg">Acompanhe o que está acontecendo no Jd. Ipanema e participe conosco.</p>
+          </motion.div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-64 bg-muted animate-pulse rounded-xl border border-border" />
+            ))}
           </div>
         ) : events.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
@@ -68,18 +72,24 @@ export default function PublicEvents() {
                   </div>
                 )}
                 <div className="p-5">
-                  <div className="flex items-center gap-2 text-accent text-sm font-medium mb-2">
-                    <Calendar className="w-4 h-4" />
-                    {moment(event.date).format("DD [de] MMM [de] YYYY [às] HH:mm")}
+                  <div className="flex items-center gap-2 text-accent text-sm font-semibold mb-1 uppercase tracking-wide">
+                    <span className="text-2xl font-bold font-heading leading-none">
+                      {moment(event.Data_Hora || event.date).format("D")}
+                    </span>
+                    <span>{moment(event.Data_Hora || event.date).format("MMM.").toUpperCase()}</span>
                   </div>
-                  <h3 className="font-heading text-xl font-semibold mb-2">{event.title}</h3>
-                  {event.description && (
-                    <p className="text-muted-foreground text-sm line-clamp-3">{event.description}</p>
+                  <h3 className="font-heading text-lg font-semibold mb-1">{event.Titulo || event.title}</h3>
+                  <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-2">
+                    <Clock className="w-3.5 h-3.5" />
+                    Início às {moment(event.Data_Hora || event.date).format("HH:mm")}
+                  </div>
+                  {(event.Descricao || event.description) && (
+                    <p className="text-muted-foreground text-sm line-clamp-3">{event.Descricao || event.description}</p>
                   )}
-                  {event.location && (
+                  {(event.Local || event.location) && (
                     <div className="flex items-center gap-1.5 text-muted-foreground text-sm mt-3">
                       <MapPin className="w-3.5 h-3.5" />
-                      {event.location}
+                      {event.Local || event.location}
                     </div>
                   )}
                 </div>
