@@ -20,6 +20,7 @@ export default function Schedules() {
   const [members, setMembers] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [isLeader, setIsLeader] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Create form
   const [newTitle, setNewTitle] = useState("");
@@ -45,6 +46,7 @@ export default function Schedules() {
     setSlots(allSlots);
     setMinistries(allMinistries);
     setMembers(allMembers);
+    setIsLoading(false);
   };
 
   const handleConfirm = async (slot) => {
@@ -184,7 +186,13 @@ export default function Schedules() {
         )}
       </div>
 
-      {schedules.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-4 mt-8">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 bg-muted animate-pulse rounded-xl border border-border"></div>
+          ))}
+        </div>
+      ) : schedules.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <ListChecks className="w-12 h-12 mx-auto mb-4 opacity-40" />
           <p className="text-lg">Nenhuma escala encontrada</p>

@@ -21,10 +21,13 @@ export default function Dashboard() {
   const [nextSchedule, setNextSchedule] = useState(null);
   const [pendingInvites, setPendingInvites] = useState([]);
   const [memberships, setMemberships] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (userProfile && userProfile.Status === "Ativo") {
-      loadData();
+      loadData().finally(() => setIsLoading(false));
+    } else if (userProfile && userProfile.Status === "Pendente") {
+      setIsLoading(false);
     }
   }, [userProfile]);
 
@@ -84,6 +87,23 @@ export default function Dashboard() {
       <div className="max-w-2xl mx-auto text-center py-20">
         <h2 className="text-2xl font-bold mb-4">Conta em Análise</h2>
         <p className="text-muted-foreground">Sua conta foi criada e está aguardando a aprovação de um pastor para acessar o painel completo.</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div className="space-y-3">
+          <div className="h-8 w-64 bg-muted animate-pulse rounded-md"></div>
+          <div className="h-4 w-48 bg-muted animate-pulse rounded-md"></div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-48 bg-muted animate-pulse rounded-xl"></div>
+          ))}
+        </div>
+        <div className="h-64 bg-muted animate-pulse rounded-xl"></div>
       </div>
     );
   }

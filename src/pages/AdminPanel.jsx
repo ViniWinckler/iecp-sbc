@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { BookOpen, Phone, Instagram, Save, Loader2, Plus, Trash2, User } from "lucide-react";
+import { BookOpen, Phone, Instagram, Save, Loader2, Plus, Trash2, User, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
 
 export default function AdminPanel() {
@@ -14,6 +15,7 @@ export default function AdminPanel() {
   const [pastors, setPastors] = useState([]);
   const [saving, setSaving] = useState(false);
   const [newPastor, setNewPastor] = useState({ name: "", role: "Pastor", bio: "", photo_url: "" });
+  const [pastorToDelete, setPastorToDelete] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -60,8 +62,10 @@ export default function AdminPanel() {
     loadData();
   };
 
-  const handleDeletePastor = async (id) => {
-    await base44.entities.Pastor.delete(id);
+  const handleDeletePastor = async () => {
+    if (!pastorToDelete) return;
+    await base44.entities.Pastor.delete(pastorToDelete.id);
+    setPastorToDelete(null);
     loadData();
   };
 
@@ -107,7 +111,7 @@ export default function AdminPanel() {
                 <p className="text-sm text-accent">{pastor.role}</p>
                 {pastor.bio && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{pastor.bio}</p>}
               </div>
-              <button onClick={() => handleDeletePastor(pastor.id)} className="p-2 hover:text-destructive transition-colors">
+              <button onClick={() => setPastorToDelete(pastor)} className="p-2 hover:text-destructive transition-colors">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -199,7 +203,40 @@ export default function AdminPanel() {
           <InfoEditor label="Longitude" value={info.longitude?.value || ""} onSave={(val) => saveInfo("longitude", val)} saving={saving} placeholder="-46.6333" noImage isShort />
         </TabsContent>
       </Tabs>
+
+      <ConfirmDeletePastorModal
+        pastor={pastorToDelete}
+        onConfirm={handleDeletePastor}
+        onCancel={() => setPastorToDelete(null)}
+      />
     </div>
+  );
+}
+
+// Confirmation Modal for Delete Pastor — rendered here so it's always in the DOM
+function ConfirmDeletePastorModal({ pastor, onConfirm, onCancel }) {
+  return (
+    <Dialog open={!!pastor} onOpenChange={(open) => { if (!open) onCancel(); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+            </div>
+            <DialogTitle className="font-heading text-lg">Remover Pastor</DialogTitle>
+          </div>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Tem certeza que deseja remover <span className="font-semibold text-foreground">{pastor?.name}</span>? Esta ação não pode ser desfeita.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="flex gap-2 mt-4">
+          <Button variant="outline" onClick={onCancel} className="flex-1">Cancelar</Button>
+          <Button variant="destructive" onClick={onConfirm} className="flex-1 gap-2">
+            <Trash2 className="w-4 h-4" /> Remover
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
