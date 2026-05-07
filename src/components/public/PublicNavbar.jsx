@@ -51,7 +51,7 @@ export default function PublicNavbar() {
         }`}
       >
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="flex items-center justify-between h-[70px]">
+          <div className="flex items-center justify-between h-[85px]">
             
             {/* ── Logo ── */}
             <Link to="/" className="flex items-center gap-3 group">
@@ -59,7 +59,7 @@ export default function PublicNavbar() {
                 <img 
                   src="/logo.png" 
                   alt="IECP SBC Logo" 
-                  className="w-12 h-12 object-cover"
+                  className="w-16 h-16 object-cover"
                 />
               </div>
               <div className="leading-tight hidden sm:block">
