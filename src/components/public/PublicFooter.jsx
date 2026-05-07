@@ -45,8 +45,8 @@ export default function PublicFooter() {
           {/* Col 1 — Logo + Descrição + Endereço */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-5">
-              <div className="overflow-hidden rounded-full w-16 h-16 mb-4 shadow-lg border border-white/10">
-                <img src="/logo.png" alt="IECP SBC" className="w-full h-full object-cover scale-125" />
+              <div className="overflow-hidden rounded-full w-20 h-20 mb-4 shadow-lg border border-white/10">
+                <img src="/logo.png" alt="IECP SBC" className="w-full h-full object-cover" />
               </div>
               <div>
                 <span className="font-heading text-lg font-bold tracking-wide block">IECP SBC</span>
