@@ -59,7 +59,7 @@ export default function PublicNavbar() {
                 <img 
                   src="/logo.png" 
                   alt="IECP SBC Logo" 
-                  className="w-10 h-10 object-cover"
+                  className="w-12 h-12 object-cover"
                 />
               </div>
               <div className="leading-tight hidden sm:block">
