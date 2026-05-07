@@ -55,8 +55,12 @@ export default function PublicNavbar() {
             
             {/* ── Logo ── */}
             <Link to="/" className="flex items-center gap-3 group">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300 ${transparent ? "bg-white/10 text-white" : "bg-primary/10 text-primary group-hover:bg-accent group-hover:text-white"}`}>
-                <Church className="w-6 h-6" />
+              <div className={`overflow-hidden rounded-lg transition-all duration-300 ${transparent ? "bg-white/10" : "shadow-sm border border-border"}`}>
+                <img 
+                  src="/logo.png" 
+                  alt="IECP SBC Logo" 
+                  className="w-10 h-10 object-cover"
+                />
               </div>
               <div className="leading-tight hidden sm:block">
                 <span className={`font-heading text-base font-bold tracking-wide block transition-colors group-hover:text-accent ${transparent ? "text-white" : "text-primary"}`}>
