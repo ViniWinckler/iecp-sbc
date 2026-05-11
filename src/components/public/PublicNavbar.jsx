@@ -55,11 +55,11 @@ export default function PublicNavbar() {
             
             {/* ── Logo ── */}
             <Link to="/" className="flex items-center gap-3 group">
-              <div className={`w-14 h-14 overflow-hidden rounded-full transition-all duration-300 ${transparent ? "bg-white/10" : "shadow-sm border border-border"}`}>
+              <div className="w-14 h-14 flex items-center justify-center transition-all duration-300">
                 <img 
                   src="/logo.png" 
                   alt="IECP SBC Logo" 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain drop-shadow-sm"
                 />
               </div>
               <div className="leading-tight hidden sm:block">
