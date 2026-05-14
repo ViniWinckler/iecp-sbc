@@ -164,7 +164,7 @@ export default function Home() {
           </AnimatedSection>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-10">
             {[
-              { value: "40+", label: "Anos de história", icon: Star, delay: 0 },
+              { value: "25+", label: "Anos de história", icon: Star, delay: 0 },
               { value: "300+", label: "Membros", icon: Users, delay: 0.1 },
               { value: "12", label: "Ministérios ativos", icon: Heart, delay: 0.2 },
               { value: "1", label: "Propósito", icon: Clock, delay: 0.3 },

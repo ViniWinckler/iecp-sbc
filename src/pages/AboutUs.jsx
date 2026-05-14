@@ -6,9 +6,9 @@ const CHURCH_INFO = {
   about: {
     title: "Nossa História",
     icon: BookOpen,
-    content: `A Igreja Evangélica Congregacional do Brasil — IECP SBC, localizada no Jardim Ipanema, em São Bernardo do Campo, nasceu do desejo de servir a comunidade local com o Evangelho de Jesus Cristo.
+    content: `A Primeira Igreja Evangélica Cristã Presbiteriana do Jardim Ipanema em São Bernardo do Campo nasceu em 4 de Janeiro de 1997. Sob a bênção do Pastor Daniel Candido de Oliveira e pastores presidentes da sede, foi realizado o primeiro culto oficial que deu início a esta jornada de fé.
 
-Ao longo de mais de 40 anos, a IECP SBC cresceu e se tornou um lar espiritual para centenas de famílias, atravessando gerações com a mesma chama de fé, amor e dedicação que a fundou.
+Ao longo de mais de 25 anos, a IECP SBC cresceu e se tornou um lar espiritual para centenas de famílias no Jardim Ipanema e Jardim do Lago, atravessando gerações com a mesma chama de fé, amor e dedicação que a fundou.
 
 Nossa trajetória é marcada por momentos de avivamento, discipulado profundo e serviço ao próximo, refletindo o coração de um povo que ama a Deus e ama a sua cidade.`,
   },
@@ -31,7 +31,7 @@ Acreditamos que cada membro é chamado a ser agente de mudança onde estiver, vi
 };
 
 const stats = [
-  { value: "40+", label: "Anos servindo", icon: Star },
+  { value: "25+", label: "Anos servindo", icon: Star },
   { value: "300+", label: "Membros ativos", icon: Users },
   { value: "10+", label: "Ministérios", icon: Heart },
 ];
@@ -77,7 +77,7 @@ export default function AboutUs() {
               Um lugar de recomeços e fé em São Bernardo.
             </h1>
             <p className="text-white/60 text-lg mt-5 max-w-xl leading-relaxed">
-              Servindo o Jardim Ipanema e região com amor, discipulado e missão há mais de 40 anos.
+              Servindo o Jardim Ipanema e região com amor, discipulado e missão há mais de 25 anos.
             </p>
           </motion.div>
 
