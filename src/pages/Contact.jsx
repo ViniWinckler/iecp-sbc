@@ -191,9 +191,9 @@ export default function Contact() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">Horários</p>
-                <p className="text-sm font-medium">Dom. 09h00 — Escola Dominical</p>
-                <p className="text-sm font-medium">Dom. 18h00 — Culto de Celebração</p>
-                <p className="text-sm font-medium">Qua. 19h30 — Culto de Oração</p>
+                <p className="text-sm font-medium">Ter. 20h00 — Reunião de Oração</p>
+                <p className="text-sm font-medium">Sex. 20h00 — Culto</p>
+                <p className="text-sm font-medium">Dom. 18h00 — Culto da Família</p>
               </div>
             </div>
           </motion.div>
