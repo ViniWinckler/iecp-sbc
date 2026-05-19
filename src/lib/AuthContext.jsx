@@ -1,30 +1,32 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { onAuthChange, logout as firebaseLogout } from '../services/auth.js';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase.js';
+import { logout as firebaseLogout } from '../services/auth.js';
 import { getUserByEmail, createUser } from '../services/db.js';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser]                   = useState(null);
+  const [userProfile, setUserProfile]     = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [authError, setAuthError] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
+  const [authError, setAuthError]         = useState(null);
 
-  // appPublicSettings might be needed by some Base44 components that expected it.
-  // We'll mock it so nothing breaks.
-  const [appPublicSettings, setAppPublicSettings] = useState({ public_settings: {} });
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(false);
+  // Mock esperado por alguns componentes legados
+  const isLoadingPublicSettings = false;
+  const appPublicSettings = { public_settings: {} };
 
   useEffect(() => {
-    const unsubscribe = onAuthChange(async (firebaseUser) => {
+    // Escuta diretamente o Firebase Auth — garante que Google e Email funcionam
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         setIsAuthenticated(true);
         try {
           let profile = await getUserByEmail(firebaseUser.email);
 
-          // Usuário novo via Google (sem perfil no Firestore) — criar automaticamente
+          // Novo usuário Google sem perfil → cria automaticamente como Pendente
           if (!profile) {
             profile = await createUser({
               Firebase_UID: firebaseUser.uid,
@@ -32,24 +34,22 @@ export const AuthProvider = ({ children }) => {
               Email: firebaseUser.email,
               Telefone: '',
               Nivel_Acesso: 'Membro',
-              // Status será definido dentro de createUser (Pendente para novos)
             });
           }
 
           setUserProfile(profile);
-
-          if (profile && profile.Status === 'Pendente') {
-            setAuthError({ type: 'pending_approval', message: 'Conta aguardando aprovação pastoral' });
-          } else {
-            setAuthError(null);
-          }
+          setAuthError(profile?.Status === 'Pendente'
+            ? { type: 'pending_approval' }
+            : null
+          );
         } catch (e) {
-          console.error("Error fetching/creating profile", e);
+          console.error('Erro ao buscar/criar perfil:', e);
+          setAuthError({ type: 'error', message: e.message });
         }
       } else {
         setUser(null);
-        setIsAuthenticated(false);
         setUserProfile(null);
+        setIsAuthenticated(false);
         setAuthError(null);
       }
       setIsLoadingAuth(false);
@@ -58,32 +58,27 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const logout = async (shouldRedirect = true) => {
+  const logout = async () => {
     try {
       await firebaseLogout();
-      if (shouldRedirect) {
-        window.location.href = '/login';
-      }
     } catch (e) {
       console.error(e);
     }
   };
 
-  const navigateToLogin = () => {
-    window.location.href = '/login';
-  };
+  const navigateToLogin = () => { window.location.href = '/login'; };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
+    <AuthContext.Provider value={{
+      user,
       userProfile,
-      isAuthenticated, 
+      isAuthenticated,
       isLoadingAuth,
       isLoadingPublicSettings,
       authError,
       appPublicSettings,
       logout,
-      navigateToLogin
+      navigateToLogin,
     }}>
       {children}
     </AuthContext.Provider>
@@ -92,8 +87,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
