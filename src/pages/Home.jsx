@@ -69,9 +69,9 @@ export default function Home() {
     }
   ]);
   const [serviceTimes, setServiceTimes] = useState([
-    { id: "1", day_of_week: "Domingo Manhã", time: "09:00", name: "Escola Dominical e Culto Matutino", icon: Sun },
-    { id: "2", day_of_week: "Domingo Noite", time: "18:00", name: "Culto de Celebração da Família", icon: Moon },
-    { id: "3", day_of_week: "Quarta-Feira", time: "19:30", name: "Culto de Oração e Doutrina", icon: Flame }
+    { id: "1", day_of_week: "Terça-Feira", time: "20:00", name: "Reunião de Oração", icon: Flame },
+    { id: "2", day_of_week: "Sexta-Feira", time: "20:00", name: "Culto", icon: BookOpen },
+    { id: "3", day_of_week: "Domingo", time: "18:00", name: "Culto da Família", icon: Heart }
   ]);
   const [verse, setVerse] = useState({
     text: "Porque eu bem sei os pensamentos que tenho a vosso respeito, diz o Senhor; pensamentos de paz, e não de mal, para vos dar o fim que esperais.",
@@ -263,16 +263,16 @@ export default function Home() {
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center text-white/80 mb-10">
               <div className="flex items-center gap-2">
-                <Sun className="w-5 h-5 text-accent" />
-                <span>Domingos: 09h00</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Moon className="w-5 h-5 text-accent" />
-                <span>Domingos: 18h00</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <Flame className="w-5 h-5 text-accent" />
-                <span>Quartas: 19h30</span>
+                <span>Terças: 20h00</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-accent" />
+                <span>Sextas: 20h00</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Heart className="w-5 h-5 text-accent" />
+                <span>Domingos: 18h00</span>
               </div>
             </div>
 

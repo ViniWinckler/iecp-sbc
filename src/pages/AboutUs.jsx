@@ -38,10 +38,22 @@ const stats = [
 
 const pastors = [
   {
-    name: "Pr. José Luiz",
+    name: "Pr. João Thiago",
     role: "Pastor Titular",
-    initials: "JL",
+    initials: "JT",
     bio: "Lidera a IECP SBC com dedicação à Palavra e ao cuidado pastoral da congregação.",
+  },
+  {
+    name: "Pr. Elton",
+    role: "Pastor",
+    initials: "E",
+    bio: "Atua na liderança espiritual e no fortalecimento das famílias da igreja.",
+  },
+  {
+    name: "Pr. Wesley",
+    role: "Pastor",
+    initials: "W",
+    bio: "Serve à comunidade com dedicação ao ensino e aos ministérios locais.",
   },
 ];
 
