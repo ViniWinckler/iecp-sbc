@@ -1,57 +1,99 @@
 import { useState, useEffect } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Calendar, ListChecks, FolderKanban, Megaphone,
-  Users, Settings, LogOut, Menu, X, Church, ChevronDown
+  Users, Settings, LogOut, Menu, Church
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/AuthContext";
+import { Navigate } from "react-router-dom";
+import { Clock } from "lucide-react";
 
 const memberNav = [
-  { path: "/dashboard", label: "Início", icon: LayoutDashboard },
-  { path: "/escalas", label: "Escalas", icon: ListChecks },
-  { path: "/calendario", label: "Calendário", icon: Calendar },
-  { path: "/projetos", label: "Projetos", icon: FolderKanban },
-  { path: "/avisos", label: "Avisos", icon: Megaphone },
+  { path: "/dashboard",  label: "Início",    icon: LayoutDashboard },
+  { path: "/escalas",    label: "Escalas",   icon: ListChecks },
+  { path: "/calendario", label: "Calendário",icon: Calendar },
+  { path: "/projetos",   label: "Projetos",  icon: FolderKanban },
+  { path: "/avisos",     label: "Avisos",    icon: Megaphone },
 ];
 
-const adminNav = [
-  { path: "/ministerios", label: "Ministérios", icon: Users },
-  { path: "/admin", label: "Administração", icon: Settings },
+const managementNav = [
+  { path: "/ministerios", label: "Ministérios",   icon: Users,    minRole: "Lider" },
+  { path: "/admin",       label: "Administração", icon: Settings, minRole: "Admin" },
 ];
+
+// Verifica se o usuário tem acesso ao item de nav baseado na hierarquia
+function hasAccess(userRole, minRole) {
+  const HIERARCHY = { Admin: 4, Pastor: 3, Lider: 2, Membro: 1 };
+  return (HIERARCHY[userRole] || 0) >= (HIERARCHY[minRole] || 0);
+}
 
 export default function InternalLayout() {
-  const [user, setUser] = useState(null);
+  const { user, userProfile, isAuthenticated, isLoadingAuth, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => navigate("/login"));
-  }, [navigate]);
+  // Fechar sidebar no mobile ao trocar de rota
+  useEffect(() => { setSidebarOpen(false); }, [location]);
 
-  const isAdmin = user?.role === "admin";
-  const isLeaderOrAdmin = user?.role === "admin" || user?.role === "leader" || user?.role === "pastor";
+  // Aguardando estado de auth
+  if (isLoadingAuth) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
-  const handleLogout = () => {
-    base44.auth.logout("/");
-  };
+  // Não autenticado → login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
-  const displayName = user?.display_name || user?.full_name || "Membro";
+  // Conta pendente de aprovação
+  if (userProfile?.Status === "Pendente") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="max-w-md w-full text-center bg-card border border-border rounded-2xl p-10 shadow-lg">
+          <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-5">
+            <Clock className="w-8 h-8 text-accent" />
+          </div>
+          <h2 className="font-heading text-2xl font-bold mb-3">Conta em Análise</h2>
+          <p className="text-muted-foreground leading-relaxed mb-6">
+            Seu cadastro foi recebido! Aguarde a aprovação de um pastor para acessar o portal interno.
+          </p>
+          <button
+            onClick={() => logout()}
+            className="text-sm text-muted-foreground underline"
+          >
+            Sair
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const role = userProfile?.Nivel_Acesso || "Membro";
+  const displayName = userProfile?.Nome_Exibicao || user?.displayName || user?.email?.split("@")[0] || "Membro";
+
+  // Itens de gestão visíveis para este usuário
+  const visibleManagement = managementNav.filter(item => hasAccess(role, item.minRole));
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
+      {/* Logo */}
       <div className="p-4 border-b border-sidebar-border">
-        <Link to="/dashboard" className="flex items-center gap-2.5">
+        <Link to="/dashboard" className="flex items-center gap-2.5 group">
           <div className="w-9 h-9 rounded-lg bg-sidebar-primary flex items-center justify-center">
             <Church className="w-5 h-5 text-sidebar-primary-foreground" />
           </div>
-          <span className="font-heading text-base font-semibold text-sidebar-foreground">
-            Nossa Igreja
-          </span>
+          <div className="leading-tight">
+            <span className="font-heading text-sm font-bold text-sidebar-foreground block">IECP SBC</span>
+            <span className="text-[9px] text-sidebar-foreground/50 uppercase tracking-widest">Portal do Membro</span>
+          </div>
         </Link>
       </div>
 
+      {/* Nav Links */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         <p className="text-xs font-medium text-sidebar-foreground/40 uppercase tracking-wider px-3 py-2">
           Principal
@@ -63,40 +105,38 @@ export default function InternalLayout() {
             <Link
               key={item.path}
               to={item.path}
-              onClick={() => setSidebarOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 active
                   ? "bg-sidebar-accent text-sidebar-primary"
                   : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
               }`}
             >
-              <Icon className="w-4.5 h-4.5" />
+              <Icon className="w-4 h-4" />
               {item.label}
             </Link>
           );
         })}
 
-        {isLeaderOrAdmin && (
+        {/* Seção de Gestão — visível apenas para Líder+ */}
+        {visibleManagement.length > 0 && (
           <>
             <p className="text-xs font-medium text-sidebar-foreground/40 uppercase tracking-wider px-3 py-2 mt-4">
               Gestão
             </p>
-            {adminNav.map((item) => {
-              if (item.path === "/admin" && !isAdmin) return null;
+            {visibleManagement.map((item) => {
               const Icon = item.icon;
               const active = location.pathname === item.path;
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                     active
                       ? "bg-sidebar-accent text-sidebar-primary"
                       : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                   }`}
                 >
-                  <Icon className="w-4.5 h-4.5" />
+                  <Icon className="w-4 h-4" />
                   {item.label}
                 </Link>
               );
@@ -105,18 +145,19 @@ export default function InternalLayout() {
         )}
       </nav>
 
+      {/* User info + Logout */}
       <div className="p-3 border-t border-sidebar-border">
         <div className="flex items-center gap-3 px-3 py-2 mb-2">
-          <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground text-xs font-bold">
+          <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground text-xs font-bold shrink-0">
             {displayName.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-foreground truncate">{displayName}</p>
-            <p className="text-xs text-sidebar-foreground/50 capitalize">{user?.role || "membro"}</p>
+            <p className="text-xs text-sidebar-foreground/50">{role}</p>
           </div>
         </div>
         <button
-          onClick={handleLogout}
+          onClick={() => logout()}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
         >
           <LogOut className="w-4 h-4" />
@@ -126,6 +167,10 @@ export default function InternalLayout() {
     </div>
   );
 
+  const currentLabel =
+    memberNav.find(n => n.path === location.pathname)?.label ||
+    managementNav.find(n => n.path === location.pathname)?.label || "";
+
   return (
     <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
@@ -133,7 +178,7 @@ export default function InternalLayout() {
         <NavContent />
       </aside>
 
-      {/* Mobile sidebar overlay */}
+      {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
@@ -152,11 +197,7 @@ export default function InternalLayout() {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <h2 className="font-heading text-lg font-semibold truncate">
-            {memberNav.find((n) => n.path === location.pathname)?.label ||
-              adminNav.find((n) => n.path === location.pathname)?.label ||
-              ""}
-          </h2>
+          <h2 className="font-heading text-lg font-semibold truncate">{currentLabel}</h2>
         </header>
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <Outlet />

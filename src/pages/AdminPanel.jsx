@@ -1,275 +1,283 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { BookOpen, Phone, Instagram, Save, Loader2, Plus, Trash2, User, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
+import {
+  Users, CheckCircle, XCircle, Shield, Trash2, AlertTriangle,
+  RefreshCw, Clock, Crown, UserCheck
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { motion } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
+import { getAllUsers, updateUser, deleteUser } from "@/services/db";
+
+const ROLES = ["Membro", "Lider", "Pastor", "Admin"];
+
+const roleColors = {
+  Admin:   "bg-red-100 text-red-700 border-red-200",
+  Pastor:  "bg-purple-100 text-purple-700 border-purple-200",
+  Lider:   "bg-blue-100 text-blue-700 border-blue-200",
+  Membro:  "bg-gray-100 text-gray-700 border-gray-200",
+  Pastor_Pendente: "bg-yellow-100 text-yellow-700 border-yellow-200",
+};
 
 export default function AdminPanel() {
-  const [info, setInfo] = useState({});
-  const [verse, setVerse] = useState({ text: "", reference: "" });
-  const [pastors, setPastors] = useState([]);
-  const [saving, setSaving] = useState(false);
-  const [newPastor, setNewPastor] = useState({ name: "", role: "Pastor", bio: "", photo_url: "" });
-  const [pastorToDelete, setPastorToDelete] = useState(null);
+  const { user, userProfile } = useAuth();
+  const [allUsers, setAllUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userToDelete, setUserToDelete] = useState(null);
 
-  useEffect(() => { loadData(); }, []);
+  const isAdmin = userProfile?.Nivel_Acesso === "Admin";
+  const isPastorOrAdmin = isAdmin || userProfile?.Nivel_Acesso === "Pastor";
 
-  const loadData = async () => {
-    const [allInfo, allVerses, allPastors] = await Promise.all([
-      base44.entities.ChurchInfo.list(),
-      base44.entities.DailyVerse.filter({ active: true }),
-      base44.entities.Pastor.list("order"),
-    ]);
-    const map = {};
-    allInfo.forEach((item) => { map[item.key] = item; });
-    setInfo(map);
-    setPastors(allPastors);
-    if (allVerses.length > 0) setVerse(allVerses[0]);
-  };
+  useEffect(() => { loadUsers(); }, []);
 
-  const saveInfo = async (key, value, image_url) => {
-    setSaving(true);
-    if (info[key]) {
-      await base44.entities.ChurchInfo.update(info[key].id, { value, image_url });
-    } else {
-      await base44.entities.ChurchInfo.create({ key, value, image_url });
+  const loadUsers = async () => {
+    setLoading(true);
+    try {
+      const users = await getAllUsers();
+      setAllUsers(users);
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Erro ao carregar usuários", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
-    await loadData();
-    setSaving(false);
-    toast({ title: "Salvo com sucesso!" });
   };
 
-  const saveVerse = async () => {
-    setSaving(true);
-    if (verse.id) {
-      await base44.entities.DailyVerse.update(verse.id, { text: verse.text, reference: verse.reference });
-    } else {
-      await base44.entities.DailyVerse.create({ text: verse.text, reference: verse.reference, active: true });
+  const handleApprove = async (u) => {
+    try {
+      await updateUser(u.Firebase_UID || u.id, { Status: "Ativo" });
+      toast({ title: `${u.Nome_Exibicao} aprovado(a)!` });
+      loadUsers();
+    } catch (e) {
+      toast({ title: "Erro ao aprovar", variant: "destructive" });
     }
-    setSaving(false);
-    toast({ title: "Versículo salvo!" });
   };
 
-  const handleAddPastor = async () => {
-    if (!newPastor.name) return;
-    await base44.entities.Pastor.create({ ...newPastor, order: pastors.length });
-    setNewPastor({ name: "", role: "Pastor", bio: "", photo_url: "" });
-    loadData();
+  const handleReject = async (u) => {
+    try {
+      await updateUser(u.Firebase_UID || u.id, { Status: "Rejeitado" });
+      toast({ title: `${u.Nome_Exibicao} rejeitado(a).` });
+      loadUsers();
+    } catch (e) {
+      toast({ title: "Erro ao rejeitar", variant: "destructive" });
+    }
   };
 
-  const handleDeletePastor = async () => {
-    if (!pastorToDelete) return;
-    await base44.entities.Pastor.delete(pastorToDelete.id);
-    setPastorToDelete(null);
-    loadData();
+  const handleChangeRole = async (u, newRole) => {
+    if (!isAdmin) {
+      toast({ title: "Apenas o Admin pode alterar cargos", variant: "destructive" });
+      return;
+    }
+    try {
+      await updateUser(u.Firebase_UID || u.id, { Nivel_Acesso: newRole });
+      toast({ title: `Cargo de ${u.Nome_Exibicao} alterado para ${newRole}` });
+      loadUsers();
+    } catch (e) {
+      toast({ title: "Erro ao alterar cargo", variant: "destructive" });
+    }
   };
+
+  const handleDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      await deleteUser(userToDelete.Firebase_UID || userToDelete.id, user?.email);
+      toast({ title: "Usuário removido" });
+      setUserToDelete(null);
+      loadUsers();
+    } catch (e) {
+      toast({ title: e.message || "Erro ao remover", variant: "destructive" });
+    }
+  };
+
+  const pendingUsers  = allUsers.filter(u => u.Status === "Pendente");
+  const activeUsers   = allUsers.filter(u => u.Status === "Ativo");
+  const rejectedUsers = allUsers.filter(u => u.Status === "Rejeitado");
+
+  const UserCard = ({ u, showActions = true }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-card border border-border rounded-xl p-4 flex items-center gap-4"
+    >
+      {/* Avatar */}
+      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary shrink-0">
+        {(u.Nome_Exibicao || u.Email || "?").charAt(0).toUpperCase()}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm truncate">{u.Nome_Exibicao || "—"}</p>
+        <p className="text-xs text-muted-foreground truncate">{u.Email}</p>
+      </div>
+
+      {/* Role badge */}
+      <span className={`hidden sm:inline-flex text-[10px] font-bold px-2 py-0.5 rounded-full border ${roleColors[u.Nivel_Acesso] || roleColors.Membro}`}>
+        {u.Nivel_Acesso || "Membro"}
+      </span>
+
+      {/* Actions */}
+      {showActions && (
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Pending: Approve / Reject */}
+          {u.Status === "Pendente" && isPastorOrAdmin && (
+            <>
+              <Button size="sm" onClick={() => handleApprove(u)} className="gap-1 bg-green-600 hover:bg-green-700 text-white h-8">
+                <CheckCircle className="w-3.5 h-3.5" /> Aprovar
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleReject(u)} className="gap-1 text-destructive border-destructive/30 h-8">
+                <XCircle className="w-3.5 h-3.5" /> Rejeitar
+              </Button>
+            </>
+          )}
+
+          {/* Active: Change role (Admin only) */}
+          {u.Status === "Ativo" && isAdmin && u.Email !== user?.email && (
+            <Select value={u.Nivel_Acesso || "Membro"} onValueChange={(val) => handleChangeRole(u, val)}>
+              <SelectTrigger className="h-8 w-32 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLES.map(r => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Delete (Admin only, cannot delete self) */}
+          {isAdmin && u.Email !== user?.email && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={() => setUserToDelete(u)}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          )}
+        </div>
+      )}
+    </motion.div>
+  );
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <h1 className="font-heading text-2xl font-bold">Administração</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-bold">Administração</h1>
+          <p className="text-muted-foreground text-sm mt-1">Gerencie membros, aprovações e cargos</p>
+        </div>
+        <Button variant="outline" size="sm" className="gap-2" onClick={loadUsers} disabled={loading}>
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          Atualizar
+        </Button>
+      </div>
 
-      <Tabs defaultValue="info" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="info">Igreja</TabsTrigger>
-          <TabsTrigger value="pastors">Pastores</TabsTrigger>
-          <TabsTrigger value="verse">Versículo</TabsTrigger>
-          <TabsTrigger value="contact">Contato</TabsTrigger>
-          <TabsTrigger value="location">Local</TabsTrigger>
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: "Total",     value: allUsers.length,   icon: Users,     color: "bg-primary/10 text-primary" },
+          { label: "Ativos",    value: activeUsers.length, icon: UserCheck, color: "bg-green-100 text-green-700" },
+          { label: "Pendentes", value: pendingUsers.length,icon: Clock,     color: "bg-yellow-100 text-yellow-700" },
+          { label: "Admins",    value: allUsers.filter(u => u.Nivel_Acesso === "Admin").length, icon: Crown, color: "bg-red-100 text-red-700" },
+        ].map(s => (
+          <div key={s.label} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${s.color}`}>
+              <s.icon className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold font-heading leading-none">{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Tabs defaultValue="pending" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="pending" className="gap-2">
+            Aprovações
+            {pendingUsers.length > 0 && (
+              <span className="bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {pendingUsers.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="active">Membros Ativos</TabsTrigger>
+          <TabsTrigger value="rejected">Rejeitados</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="info" className="mt-6 space-y-6">
-          {["about", "vision", "values"].map((key) => (
-            <InfoEditor
-              key={key}
-              label={{ about: "Sobre a Igreja", vision: "Visão", values: "Valores" }[key]}
-              value={info[key]?.value || ""}
-              imageUrl={info[key]?.image_url || ""}
-              onSave={(val, img) => saveInfo(key, val, img)}
-              saving={saving}
-            />
-          ))}
+        {/* Aprovações Pendentes */}
+        <TabsContent value="pending" className="mt-4 space-y-3">
+          {loading ? (
+            <div className="space-y-3">
+              {[1,2].map(i => <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />)}
+            </div>
+          ) : pendingUsers.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <CheckCircle className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p>Nenhuma aprovação pendente</p>
+            </div>
+          ) : (
+            pendingUsers.map(u => <UserCard key={u.id} u={u} />)
+          )}
         </TabsContent>
 
-        <TabsContent value="pastors" className="mt-6 space-y-5">
-          {/* Existing Pastors */}
-          {pastors.map((pastor) => (
-            <div key={pastor.id} className="bg-card border border-border rounded-xl p-5 flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary/8 flex items-center justify-center shrink-0">
-                {pastor.photo_url ? (
-                  <img src={pastor.photo_url} alt={pastor.name} className="w-12 h-12 rounded-full object-cover" />
-                ) : (
-                  <span className="font-bold text-primary">{pastor.name.charAt(0)}</span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold">{pastor.name}</p>
-                <p className="text-sm text-accent">{pastor.role}</p>
-                {pastor.bio && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{pastor.bio}</p>}
-              </div>
-              <button onClick={() => setPastorToDelete(pastor)} className="p-2 hover:text-destructive transition-colors">
-                <Trash2 className="w-4 h-4" />
-              </button>
+        {/* Membros Ativos */}
+        <TabsContent value="active" className="mt-4 space-y-3">
+          {loading ? (
+            <div className="space-y-3">
+              {[1,2,3].map(i => <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />)}
             </div>
-          ))}
-          {/* Add New Pastor */}
-          <div className="bg-card border border-border rounded-xl p-5 space-y-3">
-            <h3 className="font-heading font-semibold flex items-center gap-2">
-              <Plus className="w-4 h-4" /> Adicionar Pastor
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Nome *</Label>
-                <Input value={newPastor.name} onChange={(e) => setNewPastor({ ...newPastor, name: e.target.value })} className="mt-1" placeholder="Nome completo" />
-              </div>
-              <div>
-                <Label>Cargo</Label>
-                <Input value={newPastor.role} onChange={(e) => setNewPastor({ ...newPastor, role: e.target.value })} className="mt-1" placeholder="Pastor, Co-pastor..." />
-              </div>
+          ) : activeUsers.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p>Nenhum membro ativo ainda</p>
             </div>
-            <div>
-              <Label>Biografia</Label>
-              <Textarea value={newPastor.bio} onChange={(e) => setNewPastor({ ...newPastor, bio: e.target.value })} className="mt-1" placeholder="Breve biografia..." />
-            </div>
-            <div>
-              <Label>URL da Foto</Label>
-              <Input value={newPastor.photo_url} onChange={(e) => setNewPastor({ ...newPastor, photo_url: e.target.value })} className="mt-1" placeholder="https://..." />
-            </div>
-            <Button onClick={handleAddPastor} size="sm" className="gap-2">
-              <Plus className="w-4 h-4" /> Adicionar
-            </Button>
-          </div>
+          ) : (
+            activeUsers.map(u => <UserCard key={u.id} u={u} />)
+          )}
         </TabsContent>
 
-        <TabsContent value="verse" className="mt-6">
-          <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <BookOpen className="w-5 h-5 text-accent" />
-              <h3 className="font-heading font-semibold">Versículo do Dia</h3>
+        {/* Rejeitados */}
+        <TabsContent value="rejected" className="mt-4 space-y-3">
+          {rejectedUsers.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p>Nenhum usuário rejeitado</p>
             </div>
-            <div>
-              <Label>Texto</Label>
-              <Textarea
-                value={verse.text}
-                onChange={(e) => setVerse({ ...verse, text: e.target.value })}
-                className="mt-1"
-                placeholder="Porque Deus amou o mundo de tal maneira..."
-              />
-            </div>
-            <div>
-              <Label>Referência</Label>
-              <Input
-                value={verse.reference}
-                onChange={(e) => setVerse({ ...verse, reference: e.target.value })}
-                className="mt-1"
-                placeholder="João 3:16"
-              />
-            </div>
-            <Button onClick={saveVerse} disabled={saving} className="gap-2">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Salvar
-            </Button>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="contact" className="mt-6 space-y-4">
-          <InfoEditor
-            label="WhatsApp"
-            icon={<Phone className="w-5 h-5 text-green-600" />}
-            value={info.whatsapp?.value || ""}
-            onSave={(val) => saveInfo("whatsapp", val)}
-            saving={saving}
-            placeholder="+5511999999999"
-            noImage
-          />
-          <InfoEditor
-            label="Instagram"
-            icon={<Instagram className="w-5 h-5 text-pink-600" />}
-            value={info.instagram?.value || ""}
-            onSave={(val) => saveInfo("instagram", val)}
-            saving={saving}
-            placeholder="@nossaigreja"
-            noImage
-          />
-        </TabsContent>
-
-        <TabsContent value="location" className="mt-6 space-y-4">
-          <InfoEditor label="Endereço" value={info.address?.value || ""} onSave={(val) => saveInfo("address", val)} saving={saving} placeholder="Rua ..." noImage />
-          <InfoEditor label="Latitude" value={info.latitude?.value || ""} onSave={(val) => saveInfo("latitude", val)} saving={saving} placeholder="-23.5505" noImage isShort />
-          <InfoEditor label="Longitude" value={info.longitude?.value || ""} onSave={(val) => saveInfo("longitude", val)} saving={saving} placeholder="-46.6333" noImage isShort />
+          ) : (
+            rejectedUsers.map(u => <UserCard key={u.id} u={u} showActions={false} />)
+          )}
         </TabsContent>
       </Tabs>
 
-      <ConfirmDeletePastorModal
-        pastor={pastorToDelete}
-        onConfirm={handleDeletePastor}
-        onCancel={() => setPastorToDelete(null)}
-      />
-    </div>
-  );
-}
-
-// Confirmation Modal for Delete Pastor — rendered here so it's always in the DOM
-function ConfirmDeletePastorModal({ pastor, onConfirm, onCancel }) {
-  return (
-    <Dialog open={!!pastor} onOpenChange={(open) => { if (!open) onCancel(); }}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
+      {/* Confirm Delete */}
+      <Dialog open={!!userToDelete} onOpenChange={open => { if (!open) setUserToDelete(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+              </div>
+              <DialogTitle className="font-heading text-lg">Remover Usuário</DialogTitle>
             </div>
-            <DialogTitle className="font-heading text-lg">Remover Pastor</DialogTitle>
-          </div>
-          <DialogDescription className="text-sm text-muted-foreground">
-            Tem certeza que deseja remover <span className="font-semibold text-foreground">{pastor?.name}</span>? Esta ação não pode ser desfeita.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="flex gap-2 mt-4">
-          <Button variant="outline" onClick={onCancel} className="flex-1">Cancelar</Button>
-          <Button variant="destructive" onClick={onConfirm} className="flex-1 gap-2">
-            <Trash2 className="w-4 h-4" /> Remover
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function InfoEditor({ label, value: initValue, imageUrl: initImage, onSave, saving, icon, placeholder, noImage, isShort }) {
-  const [val, setVal] = useState(initValue);
-  const [img, setImg] = useState(initImage || "");
-
-  useEffect(() => {
-    setVal(initValue);
-    setImg(initImage || "");
-  }, [initValue, initImage]);
-
-  return (
-    <div className="bg-card border border-border rounded-xl p-6 space-y-3">
-      <div className="flex items-center gap-2">
-        {icon}
-        <h3 className="font-heading font-semibold">{label}</h3>
-      </div>
-      {isShort ? (
-        <Input value={val} onChange={(e) => setVal(e.target.value)} placeholder={placeholder} />
-      ) : (
-        <Textarea value={val} onChange={(e) => setVal(e.target.value)} placeholder={placeholder} className="min-h-[80px]" />
-      )}
-      {!noImage && (
-        <div>
-          <Label>URL da Imagem</Label>
-          <Input value={img} onChange={(e) => setImg(e.target.value)} className="mt-1" placeholder="https://..." />
-        </div>
-      )}
-      <Button onClick={() => onSave(val, img)} disabled={saving} size="sm" className="gap-2">
-        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-        Salvar
-      </Button>
+            <DialogDescription>
+              Tem certeza que deseja remover <strong>{userToDelete?.Nome_Exibicao}</strong>? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 mt-4">
+            <Button variant="outline" onClick={() => setUserToDelete(null)} className="flex-1">Cancelar</Button>
+            <Button variant="destructive" onClick={handleDelete} className="flex-1 gap-2">
+              <Trash2 className="w-4 h-4" /> Remover
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -84,13 +84,16 @@ export default function Ministries() {
     toast({ title: "Membro removido" });
   };
 
-  const isAdmin = userProfile?.Role === "admin" || userProfile?.Role === "Admin";
+  const role = userProfile?.Nivel_Acesso;
+  const isAdmin = role === "Admin";
+  const isPastorOrAdmin = role === "Admin" || role === "Pastor";
+  const canManage = isPastorOrAdmin || role === "Lider";
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-bold">Ministérios</h1>
-        {isAdmin && (
+        {isPastorOrAdmin && (
           <Dialog open={showCreate} onOpenChange={setShowCreate}>
             <DialogTrigger asChild>
               <Button className="gap-2"><Plus className="w-4 h-4" /> Novo Ministério</Button>
@@ -131,7 +134,7 @@ export default function Ministries() {
             ministries.map((ministry, i) => {
               const mMembers = getMinistryMembers(ministry.id);
               const isSelected = selectedMinistry?.id === ministry.id;
-              const isMyMinistry = ministry.leader_email === user?.email || isAdmin;
+              const isMyMinistry = ministry.leader_email === user?.email || canManage;
 
               return (
                 <motion.div

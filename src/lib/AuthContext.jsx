@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { onAuthChange, logout as firebaseLogout, getCurrentUser } from '../services/auth.js';
-import { getUserByEmail } from '../services/db.js';
+import { onAuthChange, logout as firebaseLogout } from '../services/auth.js';
+import { getUserByEmail, createUser } from '../services/db.js';
 
 const AuthContext = createContext();
 
@@ -17,28 +17,40 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(false);
 
   useEffect(() => {
-    // Listen to Firebase Auth state changes
     const unsubscribe = onAuthChange(async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
         setIsAuthenticated(true);
         try {
-          // Fetch our custom user profile (role, status, etc.)
-          const profile = await getUserByEmail(firebaseUser.email);
+          let profile = await getUserByEmail(firebaseUser.email);
+
+          // Usuário novo via Google (sem perfil no Firestore) — criar automaticamente
+          if (!profile) {
+            profile = await createUser({
+              Firebase_UID: firebaseUser.uid,
+              Nome_Exibicao: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+              Email: firebaseUser.email,
+              Telefone: '',
+              Nivel_Acesso: 'Membro',
+              // Status será definido dentro de createUser (Pendente para novos)
+            });
+          }
+
           setUserProfile(profile);
-          
+
           if (profile && profile.Status === 'Pendente') {
             setAuthError({ type: 'pending_approval', message: 'Conta aguardando aprovação pastoral' });
           } else {
             setAuthError(null);
           }
         } catch (e) {
-          console.error("Error fetching profile", e);
+          console.error("Error fetching/creating profile", e);
         }
       } else {
         setUser(null);
         setIsAuthenticated(false);
         setUserProfile(null);
+        setAuthError(null);
       }
       setIsLoadingAuth(false);
     });

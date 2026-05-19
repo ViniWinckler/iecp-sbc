@@ -50,12 +50,18 @@ export async function getUserByEmail(email) {
 
 export async function createUser(data) {
   const docRef = doc(db, COLLECTIONS.USUARIOS, data.Firebase_UID);
+
+  // Admin e primeiro usuário entram como Ativo diretamente
+  const isAdminEmail = data.Email === ADMIN_EMAIL;
+  const status = isAdminEmail || data.Status === 'Ativo' ? 'Ativo' : 'Pendente';
+
   const userData = {
     Firebase_UID: data.Firebase_UID,
     Nome_Exibicao: data.Nome_Exibicao,
     Email: data.Email,
     Telefone: data.Telefone || '',
     Nivel_Acesso: data.Nivel_Acesso || 'Membro',
+    Status: status,
     Data_Criacao: serverTimestamp()
   };
   await setDoc(docRef, userData);
