@@ -60,9 +60,12 @@ export default function PublicNavbar() {
                 alt="IECP SBC Logo" 
                 className="h-12 w-auto object-contain drop-shadow-md transition-all duration-300 group-hover:scale-105"
               />
-              <div className="leading-tight hidden sm:block">
-                <span className={`font-heading text-base font-bold tracking-wide block transition-colors group-hover:text-accent ${transparent ? "text-white" : "text-primary"}`}>
+              <div className="leading-tight hidden sm:flex sm:flex-col justify-center">
+                <span className={`font-heading text-xl font-extrabold tracking-wide block transition-colors group-hover:text-accent ${transparent ? "text-white" : "text-primary"}`}>
                   IECP SBC
+                </span>
+                <span className={`text-[9px] sm:text-[10px] uppercase font-bold tracking-widest leading-none mt-1 ${transparent ? "text-white/80" : "text-primary/70"}`}>
+                  Igreja Evangélica<br />Cristã Presbiteriana
                 </span>
               </div>
             </Link>

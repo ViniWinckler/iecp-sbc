@@ -51,8 +51,10 @@ export default function PublicFooter() {
                 className="h-20 w-auto object-contain drop-shadow-lg mb-4" 
               />
               <div>
-                <span className="font-heading text-lg font-bold tracking-wide block">IECP SBC</span>
-                <span className="text-white/50 text-xs uppercase tracking-widest">Jd. Ipanema</span>
+                <span className="font-heading text-xl font-extrabold tracking-wide block">IECP SBC</span>
+                <span className="text-white/70 text-[9px] uppercase tracking-widest font-bold leading-tight block mt-1">
+                  Igreja Evangélica<br />Cristã Presbiteriana
+                </span>
               </div>
             </div>
             <p className="text-white/60 text-sm leading-relaxed max-w-xs">
@@ -62,7 +64,7 @@ export default function PublicFooter() {
               <p>Estrada dos Casa, 3860, Jd. Ipanema</p>
               <p>São Bernardo do Campo - SP</p>
               <p>CEP 09840-630</p>
-              <p className="pt-1 text-white/40">Domingos: 09h e 18h &bull; Quartas: 19h30</p>
+              <p className="pt-1 text-white/40 font-medium">Terça 20h &bull; Sexta 20h &bull; Domingo 18h</p>
             </div>
           </div>
 
