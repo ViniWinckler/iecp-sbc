@@ -198,6 +198,25 @@ export default function Contact() {
             </div>
           </motion.div>
         </div>
+
+        {/* ── Mapa ─────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mt-12 bg-card border border-border rounded-2xl overflow-hidden shadow-sm h-[400px]"
+        >
+          <iframe 
+            src="https://maps.google.com/maps?q=Estrada%20dos%20Casa,%203860%20-%20Jd.%20Ipanema,%20S%C3%A3o%20Bernardo%20do%20Campo%20-%20SP&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+            width="100%" 
+            height="100%" 
+            style={{ border: 0 }} 
+            allowFullScreen="" 
+            loading="lazy" 
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Mapa da Igreja"
+          ></iframe>
+        </motion.div>
       </div>
     </div>
   );

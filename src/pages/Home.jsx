@@ -231,7 +231,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Onde Estamos */}
+      {/* Planeje sua visita CTA */}
       <section className="relative py-24 px-6 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center bg-fixed"
@@ -252,41 +252,23 @@ export default function Home() {
             />
             <p className="text-accent text-sm font-semibold tracking-[0.3em] uppercase mb-4 flex items-center justify-center gap-2">
               <MapPin className="w-4 h-4" />
-              Onde Estamos
+              Planeje sua Visita
             </p>
             <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white mb-8">
-              Estrada dos Casa, 3860<br/>
-              <span className="text-xl sm:text-2xl font-normal text-white/80 mt-2 block">
-                Jd. Ipanema, São Bernardo do Campo - SP, CEP 09840-630
-              </span>
+              Venha fazer parte da nossa família
             </h2>
             
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center text-white/80 mb-10">
-              <div className="flex items-center gap-2">
-                <Flame className="w-5 h-5 text-accent" />
-                <span>Terças: 20h00</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-accent" />
-                <span>Sextas: 20h00</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-accent" />
-                <span>Domingos: 18h00</span>
-              </div>
-            </div>
-
             <div className="flex justify-center">
-              <a href="https://www.google.com/maps/dir/?api=1&destination=-23.7380,-46.5833" target="_blank" rel="noopener noreferrer">
+              <Link to="/contato">
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
                   className="px-8 py-4 bg-accent text-accent-foreground font-semibold text-sm tracking-wider uppercase rounded-sm flex items-center gap-2"
                 >
                   <MapPin className="w-4 h-4" />
-                  Traçar Rota no Mapa
+                  Ver Localização e Contato
                 </motion.button>
-              </a>
+              </Link>
             </div>
           </AnimatedSection>
         </div>
