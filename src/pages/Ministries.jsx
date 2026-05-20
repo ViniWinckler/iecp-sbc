@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { Users, Plus, UserPlus, Trash2, Mail, AlertTriangle } from "lucide-react";
+import { Users, Plus, UserPlus, Trash2, Mail, AlertTriangle, Church } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -10,84 +9,116 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
+import { 
+  getMinisterios, createMinisterio, deleteMinisterio,
+  getConvitesByMinisterio, createConvite, updateConviteStatus
+} from "@/services/db";
 
 export default function Ministries() {
   const { user, userProfile } = useAuth();
   const [ministries, setMinistries] = useState([]);
-  const [members, setMembers] = useState([]);
+  const [membersCache, setMembersCache] = useState({});
   const [selectedMinistry, setSelectedMinistry] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Confirmation modal state
   const [memberToRemove, setMemberToRemove] = useState(null);
 
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteName, setInviteName] = useState("");
   const [inviteRole, setInviteRole] = useState("");
+
+  const role = userProfile?.Nivel_Acesso;
+  const isAdmin = role === "Admin";
+  const isPastorOrAdmin = isAdmin || role === "Pastor";
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
+    setIsLoading(true);
     try {
-      const [allMinistries, allMembers] = await Promise.all([
-        base44.entities.Ministry.list(),
-        base44.entities.MinistryMember.list(),
-      ]);
-      setMinistries(allMinistries);
-      setMembers(allMembers);
+      const allMinistries = await getMinisterios();
+      // Líderes só veem os ministérios que eles lideram. Pastores e Admins veem todos.
+      const filtered = isPastorOrAdmin 
+        ? allMinistries 
+        : allMinistries.filter(m => m.Lider_Responsavel_Email === user?.email);
+      setMinistries(filtered);
     } catch (e) {
       console.error(e);
+      toast({ title: "Erro ao carregar ministérios", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getMinistryMembers = (ministryId) => members.filter((m) => m.ministry_id === ministryId);
+  const loadMembers = async (minId) => {
+    try {
+      const convites = await getConvitesByMinisterio(minId);
+      // Ignorar removidos
+      setMembersCache(prev => ({ ...prev, [minId]: convites.filter(c => c.Status !== 'Removido') }));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSelectMinistry = (min) => {
+    if (selectedMinistry?.id === min.id) {
+      setSelectedMinistry(null);
+    } else {
+      setSelectedMinistry(min);
+      if (!membersCache[min.id]) {
+        loadMembers(min.id);
+      }
+    }
+  };
 
   const handleCreate = async () => {
     if (!newName) { toast({ title: "Nome obrigatório", variant: "destructive" }); return; }
-    await base44.entities.Ministry.create({
-      name: newName,
-      description: newDesc,
-      leader_email: user?.email,
-    });
-    setShowCreate(false);
-    setNewName(""); setNewDesc("");
-    loadData();
-    toast({ title: "Ministério criado!" });
+    try {
+      await createMinisterio({
+        Nome_Ministerio: newName,
+        Descricao: newDesc,
+        Lider_Responsavel_Email: user?.email,
+      });
+      setShowCreate(false);
+      setNewName(""); setNewDesc("");
+      loadData();
+      toast({ title: "Ministério criado!" });
+    } catch (e) {
+      toast({ title: "Erro ao criar", variant: "destructive" });
+    }
   };
 
   const handleInvite = async () => {
     if (!inviteEmail || !selectedMinistry) { toast({ title: "E-mail obrigatório", variant: "destructive" }); return; }
-    await base44.entities.MinistryMember.create({
-      ministry_id: selectedMinistry.id,
-      member_email: inviteEmail,
-      member_name: inviteName || inviteEmail,
-      role_in_ministry: inviteRole,
-      status: "pending",
-    });
-    setShowInvite(false);
-    setInviteEmail(""); setInviteName(""); setInviteRole("");
-    loadData();
-    toast({ title: "Convite enviado!" });
+    try {
+      await createConvite({
+        Email_Convidado: inviteEmail,
+        ID_Ministerio: selectedMinistry.id,
+        Funcao_no_Ministerio: inviteRole,
+      });
+      setShowInvite(false);
+      setInviteEmail(""); setInviteRole("");
+      loadMembers(selectedMinistry.id);
+      toast({ title: "Convite enviado com sucesso!" });
+    } catch (e) {
+      toast({ title: "Erro ao enviar convite", variant: "destructive" });
+    }
   };
 
   const handleRemoveMember = async () => {
     if (!memberToRemove) return;
-    await base44.entities.MinistryMember.delete(memberToRemove.id);
-    setMemberToRemove(null);
-    loadData();
-    toast({ title: "Membro removido" });
+    try {
+      await updateConviteStatus(memberToRemove.id, "Removido");
+      setMemberToRemove(null);
+      if (selectedMinistry) loadMembers(selectedMinistry.id);
+      toast({ title: "Membro removido" });
+    } catch (e) {
+      toast({ title: "Erro ao remover", variant: "destructive" });
+    }
   };
-
-  const role = userProfile?.Nivel_Acesso;
-  const isAdmin = role === "Admin";
-  const isPastorOrAdmin = role === "Admin" || role === "Pastor";
-  const canManage = isPastorOrAdmin || role === "Lider";
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -116,7 +147,6 @@ export default function Ministries() {
         )}
       </div>
 
-      {/* Skeleton Loading */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
@@ -127,14 +157,14 @@ export default function Ministries() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {ministries.length === 0 ? (
             <div className="col-span-full text-center py-16 text-muted-foreground">
-              <Users className="w-12 h-12 mx-auto mb-4 opacity-40" />
-              <p className="text-lg">Nenhum ministério cadastrado</p>
+              <Church className="w-12 h-12 mx-auto mb-4 opacity-40" />
+              <p className="text-lg">Nenhum ministério encontrado</p>
             </div>
           ) : (
             ministries.map((ministry, i) => {
-              const mMembers = getMinistryMembers(ministry.id);
+              const mMembers = membersCache[ministry.id] || [];
               const isSelected = selectedMinistry?.id === ministry.id;
-              const isMyMinistry = ministry.leader_email === user?.email || canManage;
+              const isMyMinistry = ministry.Lider_Responsavel_Email === user?.email || isPastorOrAdmin;
 
               return (
                 <motion.div
@@ -145,15 +175,16 @@ export default function Ministries() {
                   className={`bg-card border rounded-xl p-5 cursor-pointer transition-all ${
                     isSelected ? "border-accent shadow-md" : "border-border hover:border-accent/30"
                   }`}
-                  onClick={() => setSelectedMinistry(isSelected ? null : ministry)}
+                  onClick={() => handleSelectMinistry(ministry)}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-heading font-semibold text-lg">{ministry.name}</h3>
-                    <Badge variant="secondary">{mMembers.length} membros</Badge>
+                    <h3 className="font-heading font-semibold text-lg">{ministry.Nome_Ministerio}</h3>
+                    {isSelected && <Badge variant="secondary">{mMembers.length} convites</Badge>}
                   </div>
-                  {ministry.description && (
-                    <p className="text-muted-foreground text-sm mb-3">{ministry.description}</p>
+                  {ministry.Descricao && (
+                    <p className="text-muted-foreground text-sm mb-3">{ministry.Descricao}</p>
                   )}
+                  <p className="text-xs text-muted-foreground">Líder: {ministry.Lider_Responsavel_Email}</p>
 
                   {isSelected && (
                     <div className="mt-4 pt-4 border-t border-border space-y-3">
@@ -168,22 +199,22 @@ export default function Ministries() {
                         </Button>
                       )}
                       {mMembers.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Nenhum membro ainda</p>
+                        <p className="text-sm text-muted-foreground">Nenhum membro convidado ainda.</p>
                       ) : (
                         mMembers.map((member) => (
                           <div key={member.id} className="flex items-center justify-between bg-muted rounded-lg px-3 py-2">
                             <div className="flex items-center gap-2">
                               <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                                {(member.member_name || member.member_email).charAt(0).toUpperCase()}
+                                {(member.Email_Convidado).charAt(0).toUpperCase()}
                               </div>
                               <div>
-                                <p className="text-sm font-medium">{member.member_name || member.member_email}</p>
-                                <p className="text-xs text-muted-foreground">{member.role_in_ministry || "Membro"}</p>
+                                <p className="text-sm font-medium">{member.Email_Convidado}</p>
+                                <p className="text-xs text-muted-foreground">{member.Funcao_no_Ministerio || "Membro"}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Badge variant={member.status === "accepted" ? "default" : member.status === "pending" ? "secondary" : "destructive"} className="text-xs">
-                                {member.status === "accepted" ? "Ativo" : member.status === "pending" ? "Pendente" : "Recusado"}
+                              <Badge variant={member.Status === "Aceito" ? "default" : member.Status === "Pendente" ? "secondary" : "destructive"} className="text-xs">
+                                {member.Status}
                               </Badge>
                               {isMyMinistry && (
                                 <Button
@@ -214,19 +245,15 @@ export default function Ministries() {
       {/* Invite Dialog */}
       <Dialog open={showInvite} onOpenChange={setShowInvite}>
         <DialogContent>
-          <DialogHeader><DialogTitle className="font-heading">Convidar Membro</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-heading">Convidar Membro por E-mail</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-4">
             <div>
-              <Label>E-mail</Label>
+              <Label>E-mail do Membro</Label>
               <Input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} type="email" placeholder="membro@email.com" className="mt-1" />
             </div>
             <div>
-              <Label>Nome</Label>
-              <Input value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder="Nome do membro" className="mt-1" />
-            </div>
-            <div>
-              <Label>Função</Label>
-              <Input value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} placeholder="Ex: Mesa de Som" className="mt-1" />
+              <Label>Função (Opcional)</Label>
+              <Input value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} placeholder="Ex: Mesa de Som, Baterista..." className="mt-1" />
             </div>
             <Button onClick={handleInvite} className="w-full gap-2"><Mail className="w-4 h-4" /> Enviar Convite</Button>
           </div>
@@ -244,7 +271,7 @@ export default function Ministries() {
               <DialogTitle className="font-heading text-lg">Remover Membro</DialogTitle>
             </div>
             <DialogDescription className="text-sm text-muted-foreground">
-              Tem certeza que deseja remover <span className="font-semibold text-foreground">{memberToRemove?.member_name || memberToRemove?.member_email}</span> deste ministério? Esta ação não pode ser desfeita.
+              Tem certeza que deseja remover <span className="font-semibold text-foreground">{memberToRemove?.Email_Convidado}</span>?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 mt-4">

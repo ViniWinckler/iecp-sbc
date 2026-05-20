@@ -63,8 +63,8 @@ const AuthenticatedApp = () => {
             <Route path="/ministerios" element={<Ministries />} />
           </Route>
 
-          {/* Administração — somente Admin */}
-          <Route element={<ProtectedRoute requiredRole="Admin" />}>
+          {/* Administração — Pastor e Admin */}
+          <Route element={<ProtectedRoute requiredRole="Pastor" />}>
             <Route path="/admin" element={<AdminPanel />} />
           </Route>
         </Route>

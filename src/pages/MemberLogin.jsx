@@ -8,9 +8,9 @@ import toast from "react-hot-toast";
 
 export default function MemberLogin() {
   const navigate = useNavigate();
-  const { isAuthenticated, userProfile } = useAuth();
+  const { isAuthenticated, userProfile, isLoadingAuth } = useAuth();
 
-  const [mode, setMode] = useState("login"); // 'login' | 'register'
+  const [mode, setMode] = useState("login"); // 'login' | 'register' | 'google_complete'
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -18,13 +18,20 @@ export default function MemberLogin() {
   const [name, setName]         = useState("");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole]         = useState("Membro");
+  const [ministryName, setMinistryName] = useState("");
 
-  // Redireciona se já autenticado e ativo
+  // Redireciona se já autenticado ou vai para google_complete
   useEffect(() => {
-    if (isAuthenticated && userProfile?.Status === "Ativo") {
-      navigate("/dashboard");
+    if (isLoadingAuth) return;
+    if (isAuthenticated) {
+      if (userProfile) {
+        navigate("/dashboard");
+      } else {
+        setMode("google_complete");
+      }
     }
-  }, [isAuthenticated, userProfile, navigate]);
+  }, [isAuthenticated, userProfile, isLoadingAuth, navigate]);
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
@@ -32,9 +39,9 @@ export default function MemberLogin() {
     try {
       if (mode === "register") {
         if (!name.trim()) { toast.error("Informe seu nome completo."); return; }
-        await registerWithEmail(email, password, name);
-        toast.success("Cadastro realizado! Aguarde a aprovação pastoral.");
-        setMode("login");
+        await registerWithEmail(email, password, name, role, role === "Lider" ? ministryName : null);
+        toast.success("Cadastro realizado! O login prosseguirá automaticamente.");
+        // O onAuthStateChanged vai rodar e recarregar o perfil
       } else {
         await loginWithEmail(email, password);
         // Redirecionamento feito pelo useEffect acima
@@ -48,6 +55,22 @@ export default function MemberLogin() {
                 : err.code === "auth/invalid-credential"   ? "E-mail ou senha inválidos."
                 : err.message || "Ocorreu um erro.";
       toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleComplete = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (!name.trim()) { toast.error("Informe seu nome completo."); return; }
+      const { completeRegistration } = await import("@/services/auth");
+      await completeRegistration(name, role, role === "Lider" ? ministryName : null);
+      toast.success("Cadastro finalizado!");
+      window.location.reload(); // Recarrega para o AuthContext pegar o novo perfil
+    } catch (err) {
+      toast.error(err.message || "Erro ao concluir cadastro.");
     } finally {
       setLoading(false);
     }
@@ -138,31 +161,62 @@ export default function MemberLogin() {
           </div>
 
           <h2 className="font-heading text-2xl font-bold mb-1">
-            {mode === "login" ? "Entrar" : "Criar Conta"}
+            {mode === "login" ? "Entrar" : mode === "google_complete" ? "Completar Cadastro" : "Criar Conta"}
           </h2>
           <p className="text-muted-foreground text-sm mb-8">
             {mode === "login"
               ? "Acesse o portal interno da IECP SBC."
+              : mode === "google_complete" 
+              ? "Falta pouco! Preencha os dados abaixo para finalizar."
               : "Solicite seu acesso ao portal de membros."}
           </p>
 
           {/* Formulário */}
-          <form onSubmit={handleEmailAuth} className="space-y-4">
-            {mode === "register" && (
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Nome completo"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  required
-                />
-              </div>
+          <form onSubmit={mode === "google_complete" ? handleGoogleComplete : handleEmailAuth} className="space-y-4">
+            {(mode === "register" || mode === "google_complete") && (
+              <>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Nome completo"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    required
+                  />
+                </div>
+                <div className="relative">
+                  <select
+                    value={role}
+                    onChange={e => setRole(e.target.value)}
+                    className="w-full pl-3 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none"
+                    required
+                  >
+                    <option value="Membro">Sou Membro</option>
+                    <option value="Lider">Sou Líder de Ministério</option>
+                    <option value="Pastor">Sou Pastor</option>
+                  </select>
+                </div>
+                {role === "Lider" && (
+                  <div className="relative mt-4">
+                    <Church className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Nome do Ministério que lidera"
+                      value={ministryName}
+                      onChange={e => setMinistryName(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      required
+                    />
+                  </div>
+                )}
+              </>
             )}
 
-            <div className="relative">
+            {mode !== "google_complete" && (
+              <>
+                <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="email"
@@ -174,24 +228,26 @@ export default function MemberLogin() {
               />
             </div>
 
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Senha"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full pl-9 pr-10 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Senha"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="w-full pl-9 pr-10 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </>
+            )}
 
             <motion.button
               type="submit"
@@ -200,11 +256,13 @@ export default function MemberLogin() {
               whileTap={{ scale: 0.98 }}
               className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold text-sm transition-all disabled:opacity-60"
             >
-              {loading ? "Aguarde..." : mode === "login" ? "Entrar" : "Solicitar Acesso"}
+              {loading ? "Aguarde..." : mode === "login" ? "Entrar" : mode === "google_complete" ? "Concluir Cadastro" : "Solicitar Acesso"}
             </motion.button>
           </form>
 
-          {/* Divisor */}
+          {mode !== "google_complete" && (
+            <>
+              {/* Divisor */}
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
@@ -244,10 +302,12 @@ export default function MemberLogin() {
             </button>
           </p>
 
-          {mode === "register" && (
-            <p className="text-center text-xs text-muted-foreground mt-3 leading-relaxed">
-              Após o cadastro, sua conta precisará ser aprovada por um pastor antes de acessar o portal.
-            </p>
+              {mode === "register" && (
+                <p className="text-center text-xs text-muted-foreground mt-3 leading-relaxed">
+                  Líderes e Pastores precisarão de aprovação antes de acessar o portal.
+                </p>
+              )}
+            </>
           )}
         </motion.div>
       </div>

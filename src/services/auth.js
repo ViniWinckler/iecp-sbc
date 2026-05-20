@@ -87,9 +87,6 @@ export async function completeRegistration(displayName, role, minName) {
     finalRole = 'Admin';
   } else if (!finalRole) {
     finalRole = allUsers.length === 0 ? 'Admin' : 'Membro';
-  } else if (finalRole === 'Pastor') {
-    // Pastor precisa de aprovação do Admin antes de ter acesso completo
-    finalRole = 'Pastor_Pendente';
   }
 
   const userData = await createUser({
@@ -128,9 +125,6 @@ export async function registerWithEmail(email, password, displayName, role, minN
       finalRole = 'Admin';
     } else if (finalRole === 'Admin') {
       finalRole = 'Membro';
-    } else if (finalRole === 'Pastor') {
-      // Pastor precisa de aprovação do Admin antes de ter acesso completo
-      finalRole = 'Pastor_Pendente';
     }
 
     const userData = await createUser({

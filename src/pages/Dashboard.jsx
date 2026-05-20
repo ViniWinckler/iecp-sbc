@@ -11,7 +11,8 @@ import {
   getConvitesPendentes, 
   updateConviteStatus,
   getEscalasDoMembro,
-  getAvisos
+  getAvisos,
+  getMinisterio
 } from "@/services/db";
 
 export default function Dashboard() {
@@ -34,17 +35,25 @@ export default function Dashboard() {
   const loadData = async () => {
     try {
       // 1. Memberships
-      const myMemberships = await getMinisteriosDoUsuario(user.uid);
+      const myMemberships = await getMinisteriosDoUsuario(user.email);
       setMemberships(myMemberships);
 
       // 2. Pending invites
       const invites = await getConvitesPendentes(user.email);
-      setPendingInvites(invites);
+      const invitesWithDetails = await Promise.all(invites.map(async (inv) => {
+        const min = await getMinisterio(inv.ID_Ministerio);
+        return {
+          ...inv,
+          Ministerio_Nome: min?.Nome_Ministerio || "Desconhecido",
+          Convidado_Por: min?.Lider_Responsavel_Email || "Líder"
+        };
+      }));
+      setPendingInvites(invitesWithDetails);
 
       // 3. Announcements
       const allAnnouncements = await getAvisos();
       // Filter out global or specific ministry
-      const myMinistryIds = myMemberships.map((m) => m.Ministerio_ID);
+      const myMinistryIds = myMemberships.map((m) => m.id);
       const filtered = allAnnouncements.filter(
         (a) => !a.Ministerio_ID || myMinistryIds.includes(a.Ministerio_ID)
       );
@@ -231,7 +240,7 @@ export default function Dashboard() {
             <div className="space-y-2">
               {memberships.map((m) => (
                 <div key={m.id} className="flex items-center justify-between bg-muted rounded-lg px-3 py-2">
-                  <span className="text-sm font-medium">{m.Ministerio_Nome}</span>
+                  <span className="text-sm font-medium">{m.Nome_Ministerio}</span>
                 </div>
               ))}
             </div>

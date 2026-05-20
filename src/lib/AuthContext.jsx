@@ -26,17 +26,7 @@ export const AuthProvider = ({ children }) => {
         try {
           let profile = await getUserByEmail(firebaseUser.email);
 
-          // Novo usuário Google sem perfil → cria automaticamente como Pendente
-          if (!profile) {
-            profile = await createUser({
-              Firebase_UID: firebaseUser.uid,
-              Nome_Exibicao: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-              Email: firebaseUser.email,
-              Telefone: '',
-              Nivel_Acesso: 'Membro',
-            });
-          }
-
+          // Se não tem perfil, deixamos userProfile como null para o MemberLogin exibir o form de completar cadastro
           setUserProfile(profile);
           setAuthError(profile?.Status === 'Pendente'
             ? { type: 'pending_approval' }

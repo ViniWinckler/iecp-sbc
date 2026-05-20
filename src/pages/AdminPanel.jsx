@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import {
   Users, CheckCircle, XCircle, Shield, Trash2, AlertTriangle,
-  RefreshCw, Clock, Crown, UserCheck
+  RefreshCw, Clock, Crown, UserCheck, Search, Church
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
-import { getAllUsers, updateUser, deleteUser } from "@/services/db";
+import { getAllUsers, updateUser, deleteUser, getMinisterios } from "@/services/db";
+import { Input } from "@/components/ui/input";
 
 const ROLES = ["Membro", "Lider", "Pastor", "Admin"];
 
@@ -26,8 +27,10 @@ const roleColors = {
 export default function AdminPanel() {
   const { user, userProfile } = useAuth();
   const [allUsers, setAllUsers] = useState([]);
+  const [allMinisterios, setAllMinisterios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [searchEmail, setSearchEmail] = useState("");
 
   const isAdmin = userProfile?.Nivel_Acesso === "Admin";
   const isPastorOrAdmin = isAdmin || userProfile?.Nivel_Acesso === "Pastor";
@@ -37,11 +40,15 @@ export default function AdminPanel() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const users = await getAllUsers();
+      const [users, ministerios] = await Promise.all([
+        getAllUsers(),
+        getMinisterios()
+      ]);
       setAllUsers(users);
+      setAllMinisterios(ministerios);
     } catch (e) {
       console.error(e);
-      toast({ title: "Erro ao carregar usuários", variant: "destructive" });
+      toast({ title: "Erro ao carregar dados", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -97,7 +104,13 @@ export default function AdminPanel() {
   const activeUsers   = allUsers.filter(u => u.Status === "Ativo");
   const rejectedUsers = allUsers.filter(u => u.Status === "Rejeitado");
 
-  const UserCard = ({ u, showActions = true }) => (
+  const filteredPendingUsers = searchEmail.trim() 
+    ? pendingUsers.filter(u => u.Email.toLowerCase().includes(searchEmail.toLowerCase()))
+    : pendingUsers;
+
+  const UserCard = ({ u, showActions = true }) => {
+    const min = allMinisterios.find(m => m.Lider_Responsavel_Email === u.Email);
+    return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -112,6 +125,11 @@ export default function AdminPanel() {
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm truncate">{u.Nome_Exibicao || "—"}</p>
         <p className="text-xs text-muted-foreground truncate">{u.Email}</p>
+        {u.Nivel_Acesso === "Lider" && min && (
+           <p className="text-xs text-primary flex items-center gap-1 mt-1 truncate">
+             <Church className="w-3 h-3 shrink-0"/> Ministério: {min.Nome_Ministerio} {min.Descricao ? `(${min.Descricao})` : ''}
+           </p>
+        )}
       </div>
 
       {/* Role badge */}
@@ -162,7 +180,7 @@ export default function AdminPanel() {
         </div>
       )}
     </motion.div>
-  );
+  )};
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -213,17 +231,27 @@ export default function AdminPanel() {
 
         {/* Aprovações Pendentes */}
         <TabsContent value="pending" className="mt-4 space-y-3">
+          <div className="flex items-center gap-2 mb-4 bg-muted/30 p-2 rounded-xl border border-border/50">
+            <Search className="w-4 h-4 text-muted-foreground ml-2 shrink-0" />
+            <Input 
+               placeholder="Buscar e-mail do Líder/Pastor para aprovar..." 
+               value={searchEmail}
+               onChange={e => setSearchEmail(e.target.value)}
+               className="border-0 bg-transparent focus-visible:ring-0 shadow-none h-8 w-full"
+            />
+          </div>
+
           {loading ? (
             <div className="space-y-3">
               {[1,2].map(i => <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />)}
             </div>
-          ) : pendingUsers.length === 0 ? (
+          ) : filteredPendingUsers.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <CheckCircle className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Nenhuma aprovação pendente</p>
+              <p>Nenhuma aprovação encontrada para esta busca</p>
             </div>
           ) : (
-            pendingUsers.map(u => <UserCard key={u.id} u={u} />)
+            filteredPendingUsers.map(u => <UserCard key={u.id} u={u} />)
           )}
         </TabsContent>
 

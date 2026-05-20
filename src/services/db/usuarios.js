@@ -51,9 +51,19 @@ export async function getUserByEmail(email) {
 export async function createUser(data) {
   const docRef = doc(db, COLLECTIONS.USUARIOS, data.Firebase_UID);
 
-  // Admin e primeiro usuário entram como Ativo diretamente
+  // Admin and Membro default to 'Ativo'. Lider and Pastor default to 'Pendente'.
   const isAdminEmail = data.Email === ADMIN_EMAIL;
-  const status = isAdminEmail || data.Status === 'Ativo' ? 'Ativo' : 'Pendente';
+  let status = data.Status;
+  
+  if (!status) {
+    if (isAdminEmail) {
+      status = 'Ativo';
+    } else if (data.Nivel_Acesso === 'Membro') {
+      status = 'Ativo';
+    } else {
+      status = 'Pendente';
+    }
+  }
 
   const userData = {
     Firebase_UID: data.Firebase_UID,
