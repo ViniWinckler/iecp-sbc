@@ -26,16 +26,23 @@ export const AuthProvider = ({ children }) => {
         try {
           let profile = await getUserByEmail(firebaseUser.email);
 
-          // Auto-cria o Admin (Vinicius) se ele entrar sem perfil ainda
-          if (!profile && firebaseUser.email === 'vini.wincklerferreira@gmail.com') {
-            profile = await createUser({
-              Firebase_UID: firebaseUser.uid,
-              Nome_Exibicao: 'Vinicius Winckler Ferreira',
-              Email: firebaseUser.email,
-              Telefone: '',
-              Nivel_Acesso: 'Admin',
-              Status: 'Ativo'
-            });
+          // Força as permissões de Admin (Vinicius) independentemente se já existia
+          if (firebaseUser.email === 'vini.wincklerferreira@gmail.com') {
+            if (!profile) {
+              profile = await createUser({
+                Firebase_UID: firebaseUser.uid,
+                Nome_Exibicao: 'Vinicius Winckler Ferreira',
+                Email: firebaseUser.email,
+                Telefone: '',
+                Nivel_Acesso: 'Admin',
+                Status: 'Ativo'
+              });
+            } else if (profile.Nivel_Acesso !== 'Admin' || profile.Status !== 'Ativo') {
+              const { updateUser } = await import('../services/db/usuarios.js');
+              await updateUser(profile.id, { Nivel_Acesso: 'Admin', Status: 'Ativo' });
+              profile.Nivel_Acesso = 'Admin';
+              profile.Status = 'Ativo';
+            }
           }
 
           // Se não tem perfil, deixamos userProfile como null para o MemberLogin exibir o form de completar cadastro
