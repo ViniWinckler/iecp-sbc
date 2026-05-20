@@ -11,7 +11,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import AboutUs from './pages/AboutUs';
 import PublicEvents from './pages/PublicEvents';
-import Location from './pages/Location';
 import Contact from './pages/Contact';
 import Dizimos from './pages/Dizimos';
 import MemberLogin from './pages/MemberLogin';
@@ -41,7 +40,6 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<Home />} />
         <Route path="/quem-somos" element={<AboutUs />} />
         <Route path="/eventos" element={<PublicEvents />} />
-        <Route path="/localizacao" element={<Location />} />
         <Route path="/dizimos" element={<Dizimos />} />
         <Route path="/contato" element={<Contact />} />
       </Route>
