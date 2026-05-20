@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 export default function MemberLogin() {
   const navigate = useNavigate();
-  const { isAuthenticated, userProfile, isLoadingAuth } = useAuth();
+  const { isAuthenticated, userProfile, isLoadingAuth, user } = useAuth();
 
   const [mode, setMode] = useState("login"); // 'login' | 'register' | 'google_complete'
   const [showPassword, setShowPassword] = useState(false);
@@ -24,6 +24,14 @@ export default function MemberLogin() {
   // Redireciona se já autenticado ou vai para google_complete
   useEffect(() => {
     if (isLoadingAuth) return;
+    
+    // Fallback: Se for o admin, vai direto pro dashboard independente do userProfile estar null temporariamente
+    const currentUserEmail = userProfile?.Email || user?.email;
+    if (isAuthenticated && currentUserEmail === 'vini.wincklerferreira@gmail.com') {
+      navigate("/dashboard");
+      return;
+    }
+
     if (isAuthenticated) {
       if (userProfile) {
         navigate("/dashboard");
@@ -31,7 +39,7 @@ export default function MemberLogin() {
         setMode("google_complete");
       }
     }
-  }, [isAuthenticated, userProfile, isLoadingAuth, navigate]);
+  }, [isAuthenticated, userProfile, isLoadingAuth, navigate, user]);
 
   const handleEmailAuth = async (e) => {
     e.preventDefault();
