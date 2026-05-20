@@ -132,7 +132,7 @@ export default function HeroBanner({ banners = [] }) {
               transition={{ delay: 0.9 }}
               className="flex flex-col sm:flex-row gap-4"
             >
-              <Link to="/localizacao">
+              <Link to="/contato">
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}

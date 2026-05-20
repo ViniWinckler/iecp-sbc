@@ -26,6 +26,18 @@ export const AuthProvider = ({ children }) => {
         try {
           let profile = await getUserByEmail(firebaseUser.email);
 
+          // Auto-cria o Admin (Vinicius) se ele entrar sem perfil ainda
+          if (!profile && firebaseUser.email === 'vini.wincklerferreira@gmail.com') {
+            profile = await createUser({
+              Firebase_UID: firebaseUser.uid,
+              Nome_Exibicao: 'Vinicius Winckler Ferreira',
+              Email: firebaseUser.email,
+              Telefone: '',
+              Nivel_Acesso: 'Admin',
+              Status: 'Ativo'
+            });
+          }
+
           // Se não tem perfil, deixamos userProfile como null para o MemberLogin exibir o form de completar cadastro
           setUserProfile(profile);
           setAuthError(profile?.Status === 'Pendente'
