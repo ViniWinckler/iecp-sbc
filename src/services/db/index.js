@@ -8,7 +8,8 @@ export const COLLECTIONS = {
   PROJETOS: 'Projetos',
   TAREFAS_CHAMADOS: 'Tarefas_Chamados',
   EVENTOS_PUBLICOS: 'Eventos_Publicos',
-  BANNERS_HOME: 'Banners_Home'
+  BANNERS_HOME: 'Banners_Home',
+  AGENDA_INTERNA: 'Agenda_Interna'
 };
 
 export const ADMIN_EMAIL = 'vini.wincklerferreira@gmail.com';

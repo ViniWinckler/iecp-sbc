@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { FolderKanban, Plus, CheckCircle2, Circle, AlertTriangle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,16 +12,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
+import { 
+  getAllProjetos, 
+  createProjeto, 
+  getTarefasPorProjeto, 
+  createTarefa, 
+  updateTarefaStatus, 
+  autoUpdateProjectProgress,
+  getMinisterios 
+} from "@/services/db";
 
 export default function Projects() {
-  const [user, setUser] = useState(null);
+  const { userProfile } = useAuth();
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [ministries, setMinistries] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showTicket, setShowTicket] = useState(false);
-  const [isLeader, setIsLeader] = useState(false);
+  
+  const isLeader = userProfile?.Nivel_Acesso === "Admin" || userProfile?.Nivel_Acesso === "Pastor" || userProfile?.Nivel_Acesso === "Lider";
 
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -31,69 +41,100 @@ export default function Projects() {
   const [ticketDesc, setTicketDesc] = useState("");
   const [ticketProjectId, setTicketProjectId] = useState("");
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { 
+    if (userProfile) loadData(); 
+  }, [userProfile]);
 
   const loadData = async () => {
-    const me = await base44.auth.me();
-    setUser(me);
-    setIsLeader(me.role === "admin" || me.role === "leader");
-    const [allProjects, allTasks, allMinistries] = await Promise.all([
-      base44.entities.Project.list("-created_date"),
-      base44.entities.Task.list("-created_date"),
-      base44.entities.Ministry.list(),
-    ]);
-    setProjects(allProjects);
-    setTasks(allTasks);
-    setMinistries(allMinistries);
+    try {
+      const [allProjects, allMinistries] = await Promise.all([
+        getAllProjetos(),
+        getMinisterios(),
+      ]);
+      setProjects(allProjects);
+      setMinistries(allMinistries);
+      
+      // Load tasks for all projects
+      const tasksPromises = allProjects.map(p => getTarefasPorProjeto(p.id));
+      const allTasksArrays = await Promise.all(tasksPromises);
+      const flattenedTasks = allTasksArrays.flat();
+      setTasks(flattenedTasks);
+    } catch (err) {
+      console.error("Erro ao carregar projetos:", err);
+      toast({ title: "Erro ao carregar dados", variant: "destructive" });
+    }
   };
 
-  const getProjectTasks = (projectId) => tasks.filter((t) => t.project_id === projectId);
+  const getProjectTasks = (projectId) => tasks.filter((t) => t.ID_Projeto === projectId);
   const getProgress = (projectId) => {
-    const pTasks = getProjectTasks(projectId);
-    if (pTasks.length === 0) return 0;
-    return Math.round((pTasks.filter((t) => t.status === "resolved").length / pTasks.length) * 100);
+    const project = projects.find(p => p.id === projectId);
+    return project?.Progresso || 0;
   };
 
   const handleCreateProject = async () => {
     if (!newName) { toast({ title: "Nome obrigatório", variant: "destructive" }); return; }
     const ministry = ministries.find((m) => m.id === newMinistryId);
-    await base44.entities.Project.create({
-      name: newName,
-      description: newDesc,
-      ministry_id: newMinistryId,
-      ministry_name: ministry?.name || "",
-      leader_email: user.email,
-    });
-    setShowCreate(false);
-    setNewName(""); setNewDesc(""); setNewMinistryId("");
-    loadData();
-    toast({ title: "Projeto criado!" });
+    try {
+      await createProjeto({
+        Nome: newName,
+        Descricao: newDesc,
+        ID_Ministerio: newMinistryId,
+        Nome_Ministerio: ministry?.Nome || "",
+        Criado_Por: userProfile.Email,
+      });
+      setShowCreate(false);
+      setNewName(""); setNewDesc(""); setNewMinistryId("");
+      loadData();
+      toast({ title: "Projeto criado!" });
+    } catch (error) {
+      toast({ title: "Erro ao criar projeto", variant: "destructive" });
+    }
   };
 
   const handleCreateTicket = async () => {
     if (!ticketTitle || !ticketProjectId) { toast({ title: "Preencha os campos", variant: "destructive" }); return; }
-    await base44.entities.Task.create({
-      project_id: ticketProjectId,
-      title: ticketTitle,
-      description: ticketDesc,
-      type: "ticket",
-    });
-    setShowTicket(false);
-    setTicketTitle(""); setTicketDesc(""); setTicketProjectId("");
-    loadData();
-    toast({ title: "Chamado aberto!" });
+    try {
+      await createTarefa({
+        ID_Projeto: ticketProjectId,
+        Titulo: ticketTitle,
+        Descricao: ticketDesc,
+        Tipo: "Chamado",
+        Criado_Por: userProfile.Email,
+      });
+      setShowTicket(false);
+      setTicketTitle(""); setTicketDesc(""); setTicketProjectId("");
+      loadData();
+      toast({ title: "Chamado aberto!" });
+    } catch (error) {
+      toast({ title: "Erro ao abrir chamado", variant: "destructive" });
+    }
   };
 
   const toggleTask = async (task) => {
-    const newStatus = task.status === "resolved" ? "open" : "resolved";
-    await base44.entities.Task.update(task.id, { status: newStatus });
-    loadData();
+    try {
+      const newStatus = task.Status === "Concluido" ? "A Fazer" : "Concluido";
+      await updateTarefaStatus(task.id, newStatus);
+      await autoUpdateProjectProgress(task.ID_Projeto);
+      loadData();
+    } catch (error) {
+      toast({ title: "Erro ao atualizar tarefa", variant: "destructive" });
+    }
   };
 
   const handleAddTask = async (projectId, title) => {
     if (!title) return;
-    await base44.entities.Task.create({ project_id: projectId, title, type: "task" });
-    loadData();
+    try {
+      await createTarefa({ 
+        ID_Projeto: projectId, 
+        Titulo: title, 
+        Tipo: "Tarefa",
+        Criado_Por: userProfile.Email
+      });
+      await autoUpdateProjectProgress(projectId);
+      loadData();
+    } catch (error) {
+      toast({ title: "Erro ao adicionar tarefa", variant: "destructive" });
+    }
   };
 
   return (
@@ -113,7 +154,7 @@ export default function Projects() {
                   <Select value={ticketProjectId} onValueChange={setTicketProjectId}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      {projects.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
+                      {projects.map((p) => (<SelectItem key={p.id} value={p.id}>{p.Nome}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -150,7 +191,7 @@ export default function Projects() {
                     <Select value={newMinistryId} onValueChange={setNewMinistryId}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {ministries.map((m) => (<SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>))}
+                        {ministries.map((m) => (<SelectItem key={m.id} value={m.id}>{m.Nome}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -190,11 +231,11 @@ export default function Projects() {
                 className="bg-card border border-border rounded-xl p-5 cursor-pointer hover:border-accent/30 hover:shadow-md transition-all"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-heading font-semibold">{project.name}</h3>
+                  <h3 className="font-heading font-semibold">{project.Nome}</h3>
                   <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 </div>
-                {project.ministry_name && (
-                  <Badge variant="secondary" className="text-xs mb-3">{project.ministry_name}</Badge>
+                {project.Nome_Ministerio && (
+                  <Badge variant="secondary" className="text-xs mb-3">{project.Nome_Ministerio}</Badge>
                 )}
                 <Progress value={getProgress(project.id)} className="h-2 mb-2" />
                 <p className="text-sm text-muted-foreground">{getProgress(project.id)}% concluído</p>
@@ -209,16 +250,16 @@ export default function Projects() {
 
 function ProjectDetail({ project, tasks, progress, onBack, onToggleTask, onAddTask, isLeader }) {
   const [newTask, setNewTask] = useState("");
-  const taskItems = tasks.filter((t) => t.type === "task");
-  const tickets = tasks.filter((t) => t.type === "ticket");
+  const taskItems = tasks.filter((t) => t.Tipo === "Tarefa");
+  const tickets = tasks.filter((t) => t.Tipo === "Chamado");
 
   return (
     <div className="space-y-6">
       <button onClick={onBack} className="text-sm text-primary hover:underline">← Voltar aos projetos</button>
       <div className="bg-card border border-border rounded-xl p-6">
-        <h2 className="font-heading text-xl font-bold mb-2">{project.name}</h2>
-        {project.description && <p className="text-muted-foreground mb-4">{project.description}</p>}
-        {project.ministry_name && <Badge variant="secondary" className="mb-4">{project.ministry_name}</Badge>}
+        <h2 className="font-heading text-xl font-bold mb-2">{project.Nome}</h2>
+        {project.Descricao && <p className="text-muted-foreground mb-4">{project.Descricao}</p>}
+        {project.Nome_Ministerio && <Badge variant="secondary" className="mb-4">{project.Nome_Ministerio}</Badge>}
         <Progress value={progress} className="h-3 mb-2" />
         <p className="text-sm text-muted-foreground">{progress}% concluído</p>
       </div>
@@ -229,11 +270,12 @@ function ProjectDetail({ project, tasks, progress, onBack, onToggleTask, onAddTa
           {taskItems.map((task) => (
             <div key={task.id} className="flex items-center gap-3 py-2">
               <Checkbox
-                checked={task.status === "resolved"}
+                checked={task.Status === "Concluido"}
+                disabled={!isLeader}
                 onCheckedChange={() => onToggleTask(task)}
               />
-              <span className={`text-sm ${task.status === "resolved" ? "line-through text-muted-foreground" : ""}`}>
-                {task.title}
+              <span className={`text-sm ${task.Status === "Concluido" ? "line-through text-muted-foreground" : ""}`}>
+                {task.Titulo}
               </span>
             </div>
           ))}
@@ -265,11 +307,11 @@ function ProjectDetail({ project, tasks, progress, onBack, onToggleTask, onAddTa
             {tickets.map((ticket) => (
               <div key={ticket.id} className="flex items-center justify-between bg-muted rounded-lg px-3 py-2.5">
                 <div>
-                  <p className="text-sm font-medium">{ticket.title}</p>
-                  {ticket.description && <p className="text-xs text-muted-foreground">{ticket.description}</p>}
+                  <p className="text-sm font-medium">{ticket.Titulo}</p>
+                  {ticket.Descricao && <p className="text-xs text-muted-foreground">{ticket.Descricao}</p>}
                 </div>
-                <Badge variant={ticket.status === "resolved" ? "default" : "secondary"}>
-                  {ticket.status === "resolved" ? "Resolvido" : ticket.status === "in_progress" ? "Em andamento" : "Aberto"}
+                <Badge variant={ticket.Status === "Concluido" ? "default" : "secondary"}>
+                  {ticket.Status === "Concluido" ? "Resolvido" : ticket.Status === "Em Progresso" ? "Em andamento" : "Aberto"}
                 </Badge>
               </div>
             ))}

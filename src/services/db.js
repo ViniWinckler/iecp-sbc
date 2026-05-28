@@ -85,3 +85,8 @@ export {
   getAllBanners,
   deleteBanner
 } from './db/eventos.js';
+export {
+  getAgendaEventos,
+  createAgendaEvento,
+  deleteAgendaEvento
+} from './db/agenda.js';

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { ChevronLeft, ChevronRight, Plus, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import moment from "moment";
+import { getAgendaEventos, createAgendaEvento, getMinisterios } from "@/services/db";
 
 const typeColors = {
   schedule: "bg-blue-100 text-blue-700 border-blue-200",
@@ -27,13 +28,14 @@ const typeLabels = {
 };
 
 export default function CalendarPage() {
-  const [user, setUser] = useState(null);
+  const { userProfile } = useAuth();
   const [events, setEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(moment());
   const [filter, setFilter] = useState("all");
   const [ministries, setMinistries] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
-  const [isLeader, setIsLeader] = useState(false);
+  
+  const isLeader = userProfile?.Nivel_Acesso === "Admin" || userProfile?.Nivel_Acesso === "Pastor" || userProfile?.Nivel_Acesso === "Lider";
 
   const [newTitle, setNewTitle] = useState("");
   const [newDate, setNewDate] = useState("");
@@ -41,18 +43,21 @@ export default function CalendarPage() {
   const [newMinistryId, setNewMinistryId] = useState("");
   const [newDescription, setNewDescription] = useState("");
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { 
+    if (userProfile) loadData(); 
+  }, [userProfile]);
 
   const loadData = async () => {
-    const me = await base44.auth.me();
-    setUser(me);
-    setIsLeader(me.role === "admin" || me.role === "leader");
-    const [allEvents, allMinistries] = await Promise.all([
-      base44.entities.CalendarEvent.list("-date"),
-      base44.entities.Ministry.list(),
-    ]);
-    setEvents(allEvents);
-    setMinistries(allMinistries);
+    try {
+      const [allEvents, allMinistries] = await Promise.all([
+        getAgendaEventos(),
+        getMinisterios(),
+      ]);
+      setEvents(allEvents);
+      setMinistries(allMinistries);
+    } catch (error) {
+      toast({ title: "Erro ao carregar calendário", variant: "destructive" });
+    }
   };
 
   const handleCreate = async () => {
@@ -61,22 +66,27 @@ export default function CalendarPage() {
       return;
     }
     const ministry = ministries.find((m) => m.id === newMinistryId);
-    await base44.entities.CalendarEvent.create({
-      title: newTitle,
-      date: newDate,
-      type: newType,
-      ministry_id: newMinistryId || undefined,
-      ministry_name: ministry?.name || "",
-      description: newDescription,
-    });
-    setShowCreate(false);
-    setNewTitle("");
-    setNewDate("");
-    setNewType("general");
-    setNewMinistryId("");
-    setNewDescription("");
-    loadData();
-    toast({ title: "Evento criado!" });
+    try {
+      await createAgendaEvento({
+        Titulo: newTitle,
+        Data_Hora: newDate,
+        Tipo: newType,
+        ID_Ministerio: newMinistryId || "",
+        Nome_Ministerio: ministry?.Nome || "",
+        Descricao: newDescription,
+        Criado_Por: userProfile.Email
+      });
+      setShowCreate(false);
+      setNewTitle("");
+      setNewDate("");
+      setNewType("general");
+      setNewMinistryId("");
+      setNewDescription("");
+      loadData();
+      toast({ title: "Evento criado!" });
+    } catch (error) {
+      toast({ title: "Erro ao criar evento", variant: "destructive" });
+    }
   };
 
   const startOfMonth = currentDate.clone().startOf("month");
@@ -93,16 +103,16 @@ export default function CalendarPage() {
 
   const filteredEvents = events.filter((e) => {
     if (filter === "mine") {
-      return true; // simplified — ideally filter by user's schedules
+      return true; // simplificado - num app real filtraria pelos ministérios do usuário
     }
     if (filter !== "all" && filter !== "mine") {
-      return e.ministry_id === filter;
+      return e.ID_Ministerio === filter;
     }
     return true;
   });
 
   const getEventsForDay = (d) => {
-    return filteredEvents.filter((e) => moment(e.date).isSame(d, "day"));
+    return filteredEvents.filter((e) => moment(e.Data_Hora).isSame(d, "day"));
   };
 
   return (
@@ -119,7 +129,7 @@ export default function CalendarPage() {
               <SelectItem value="all">Todos os Eventos</SelectItem>
               <SelectItem value="mine">Meus Compromissos</SelectItem>
               {ministries.map((m) => (
-                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                <SelectItem key={m.id} value={m.id}>{m.Nome}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -158,7 +168,7 @@ export default function CalendarPage() {
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Nenhum" /></SelectTrigger>
                       <SelectContent>
                         {ministries.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                          <SelectItem key={m.id} value={m.id}>{m.Nome}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -219,9 +229,9 @@ export default function CalendarPage() {
                   {dayEvents.slice(0, 2).map((ev) => (
                     <div
                       key={ev.id}
-                      className={`text-[10px] px-1.5 py-0.5 rounded border truncate ${typeColors[ev.type] || typeColors.general}`}
+                      className={`text-[10px] px-1.5 py-0.5 rounded border truncate ${typeColors[ev.Tipo] || typeColors.general}`}
                     >
-                      {ev.title}
+                      {ev.Titulo}
                     </div>
                   ))}
                   {dayEvents.length > 2 && (
