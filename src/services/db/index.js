@@ -12,4 +12,7 @@ export const COLLECTIONS = {
   AGENDA_INTERNA: 'Agenda_Interna'
 };
 
-export const ADMIN_EMAIL = 'vinicius.w.ferreira@aluno.senai.br';
+export const ADMIN_EMAILS = [
+  'vini.wincklerferreira@gmail.com',
+  'vinicius.w.ferreira@aluno.senai.br'
+];

@@ -2,10 +2,10 @@ import {
   collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp, Timestamp
 } from 'firebase/firestore';
 import { db } from '../../firebase.js';
-import { COLLECTIONS, ADMIN_EMAIL } from './index.js';
+import { COLLECTIONS, ADMIN_EMAILS } from './index.js';
 
 export function isAdmin(userData) {
-  return userData && userData.Email === ADMIN_EMAIL && userData.Nivel_Acesso === 'Admin';
+  return userData && ADMIN_EMAILS.includes(userData.Email) && userData.Nivel_Acesso === 'Admin';
 }
 
 
@@ -52,7 +52,7 @@ export async function createUser(data) {
   const docRef = doc(db, COLLECTIONS.USUARIOS, data.Firebase_UID);
 
   // Admin and Membro default to 'Ativo'. Lider and Pastor default to 'Pendente'.
-  const isAdminEmail = data.Email === ADMIN_EMAIL;
+  const isAdminEmail = ADMIN_EMAILS.includes(data.Email);
   let status = data.Status;
   
   if (!status) {
@@ -105,7 +105,7 @@ export async function getAllUsers() {
 
 export async function updateUserRole(uid, newRole, requesterEmail) {
   // Security check: Only the super admin can change roles
-  if (requesterEmail !== ADMIN_EMAIL) {
+  if (!ADMIN_EMAILS.includes(requesterEmail)) {
     throw new Error('Permissão negada: Apenas o Administrador Principal pode alterar níveis de acesso.');
   }
 
@@ -119,7 +119,7 @@ export async function updateUserRole(uid, newRole, requesterEmail) {
  */
 
 export async function deleteUser(uid, requesterEmail) {
-  if (requesterEmail !== ADMIN_EMAIL) {
+  if (!ADMIN_EMAILS.includes(requesterEmail)) {
     throw new Error('Permissão negada: Apenas o Administrador Principal pode excluir contas.');
   }
 
@@ -128,7 +128,7 @@ export async function deleteUser(uid, requesterEmail) {
   
   if (userSnap.exists()) {
     const userData = userSnap.data();
-    if (userData.Email === ADMIN_EMAIL) {
+    if (ADMIN_EMAILS.includes(userData.Email)) {
       throw new Error('Operação negada: Não é possível excluir a conta do Administrador Principal.');
     }
   }

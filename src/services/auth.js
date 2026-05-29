@@ -79,11 +79,12 @@ export async function completeRegistration(displayName, role, minName) {
   if (!user) throw new Error('No authenticated user');
 
   // Check if this is the first user in the system or if it's the specified Super Admin
-  const { getAllUsers, createMinisterio } = await import('./db.js');
+  const { getAllUsers, createMinisterio, COLLECTIONS } = await import('./db.js');
+  const { ADMIN_EMAILS } = await import('./db/index.js');
   const allUsers = await getAllUsers();
   
   let finalRole = role;
-  if (user.email === 'vinicius.w.ferreira@aluno.senai.br') {
+  if (ADMIN_EMAILS.includes(user.email)) {
     finalRole = 'Admin';
   } else if (!finalRole) {
     finalRole = allUsers.length === 0 ? 'Admin' : 'Membro';
@@ -121,7 +122,8 @@ export async function registerWithEmail(email, password, displayName, role, minN
 
     // Security check: Only the designated email can be Admin
     let finalRole = role || 'Membro';
-    if (email === 'vinicius.w.ferreira@aluno.senai.br') {
+    const { ADMIN_EMAILS } = await import('./db/index.js');
+    if (ADMIN_EMAILS.includes(email)) {
       finalRole = 'Admin';
     } else if (finalRole === 'Admin') {
       finalRole = 'Membro';
@@ -206,7 +208,8 @@ export function initAuth() {
         currentUserData = await getUser(user.uid);
         
         // Automatic cleanup for the Super Admin
-        if (user.email === 'vinicius.w.ferreira@aluno.senai.br') {
+        const { ADMIN_EMAILS } = await import('./db/index.js');
+        if (ADMIN_EMAILS.includes(user.email)) {
           const { getAllUsers, updateUser, COLLECTIONS } = await import('./db.js');
           const { deleteDoc, doc, db } = await import('firebase/firestore'); // Using dynamic import for safety
           const users = await getAllUsers();

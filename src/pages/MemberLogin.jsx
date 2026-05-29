@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Mail, Lock, User, Chrome, Church, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { loginWithEmail, loginWithGoogle, registerWithEmail } from "@/services/auth";
+import { ADMIN_EMAILS } from "@/services/db/index";
 import toast from "react-hot-toast";
 
 export default function MemberLogin() {
@@ -25,9 +26,9 @@ export default function MemberLogin() {
   useEffect(() => {
     if (isLoadingAuth) return;
     
-    // Fallback: Se for o admin, vai direto pro dashboard independente do userProfile estar null temporariamente
+    // Fallback: Se for admin, vai direto pro dashboard independente do userProfile estar null temporariamente
     const currentUserEmail = userProfile?.Email || user?.email;
-    if (isAuthenticated && currentUserEmail === 'vinicius.w.ferreira@aluno.senai.br') {
+    if (isAuthenticated && ADMIN_EMAILS.includes(currentUserEmail)) {
       navigate("/dashboard");
       return;
     }
