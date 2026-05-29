@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
           let profile = await getUserByEmail(firebaseUser.email);
 
           // Força as permissões de Admin (Vinicius) independentemente se já existia
-          if (firebaseUser.email === 'vini.wincklerferreira@gmail.com') {
+          if (firebaseUser.email === 'vinicius.w.ferreira@aluno.senai.br') {
             if (!profile) {
               profile = await createUser({
                 Firebase_UID: firebaseUser.uid,

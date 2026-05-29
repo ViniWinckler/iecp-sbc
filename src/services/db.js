@@ -22,7 +22,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase.js';
 
-const ADMIN_EMAIL = 'vini.wincklerferreira@gmail.com';
+const ADMIN_EMAIL = 'vinicius.w.ferreira@aluno.senai.br';
 
 export {
   getUser,

@@ -27,7 +27,7 @@ export default function MemberLogin() {
     
     // Fallback: Se for o admin, vai direto pro dashboard independente do userProfile estar null temporariamente
     const currentUserEmail = userProfile?.Email || user?.email;
-    if (isAuthenticated && currentUserEmail === 'vini.wincklerferreira@gmail.com') {
+    if (isAuthenticated && currentUserEmail === 'vinicius.w.ferreira@aluno.senai.br') {
       navigate("/dashboard");
       return;
     }

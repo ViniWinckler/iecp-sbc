@@ -83,7 +83,7 @@ export async function completeRegistration(displayName, role, minName) {
   const allUsers = await getAllUsers();
   
   let finalRole = role;
-  if (user.email === 'vini.wincklerferreira@gmail.com') {
+  if (user.email === 'vinicius.w.ferreira@aluno.senai.br') {
     finalRole = 'Admin';
   } else if (!finalRole) {
     finalRole = allUsers.length === 0 ? 'Admin' : 'Membro';
@@ -121,7 +121,7 @@ export async function registerWithEmail(email, password, displayName, role, minN
 
     // Security check: Only the designated email can be Admin
     let finalRole = role || 'Membro';
-    if (email === 'vini.wincklerferreira@gmail.com') {
+    if (email === 'vinicius.w.ferreira@aluno.senai.br') {
       finalRole = 'Admin';
     } else if (finalRole === 'Admin') {
       finalRole = 'Membro';
@@ -206,7 +206,7 @@ export function initAuth() {
         currentUserData = await getUser(user.uid);
         
         // Automatic cleanup for the Super Admin
-        if (user.email === 'vini.wincklerferreira@gmail.com') {
+        if (user.email === 'vinicius.w.ferreira@aluno.senai.br') {
           const { getAllUsers, updateUser, COLLECTIONS } = await import('./db.js');
           const { deleteDoc, doc, db } = await import('firebase/firestore'); // Using dynamic import for safety
           const users = await getAllUsers();
