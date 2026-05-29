@@ -80,11 +80,10 @@ export async function completeRegistration(displayName, role, minName) {
 
   // Check if this is the first user in the system or if it's the specified Super Admin
   const { getAllUsers, createMinisterio, COLLECTIONS } = await import('./db.js');
-  const { ADMIN_EMAILS } = await import('./db/index.js');
   const allUsers = await getAllUsers();
   
   let finalRole = role;
-  if (ADMIN_EMAILS.includes(user.email)) {
+  if (user.email === 'vini.wincklerferreira@gmail.com') {
     finalRole = 'Admin';
   } else if (!finalRole) {
     finalRole = allUsers.length === 0 ? 'Admin' : 'Membro';
@@ -122,8 +121,7 @@ export async function registerWithEmail(email, password, displayName, role, minN
 
     // Security check: Only the designated email can be Admin
     let finalRole = role || 'Membro';
-    const { ADMIN_EMAILS } = await import('./db/index.js');
-    if (ADMIN_EMAILS.includes(email)) {
+    if (email === 'vini.wincklerferreira@gmail.com') {
       finalRole = 'Admin';
     } else if (finalRole === 'Admin') {
       finalRole = 'Membro';
@@ -208,19 +206,8 @@ export function initAuth() {
         currentUserData = await getUser(user.uid);
         
         // Automatic cleanup for the Super Admin
-        const { ADMIN_EMAILS } = await import('./db/index.js');
-        if (ADMIN_EMAILS.includes(user.email)) {
-          const { getAllUsers, updateUser, COLLECTIONS } = await import('./db.js');
-          const { deleteDoc, doc, db } = await import('firebase/firestore'); // Using dynamic import for safety
-          const users = await getAllUsers();
-          const duplicates = users.filter(u => u.Email === user.email && u.Firebase_UID !== user.uid);
-          
-          for (const d of duplicates) {
-            console.log('Cleaning up duplicate admin account:', d.id);
-            // In a real environment, we'd delete the doc. 
-            // For now, we'll just ensure the current one is Admin.
-          }
-
+        if (user.email === 'vini.wincklerferreira@gmail.com') {
+          const { getAllUsers, updateUser } = await import('./db.js');
           if (currentUserData && currentUserData.Nivel_Acesso !== 'Admin') {
             await updateUser(user.uid, { Nivel_Acesso: 'Admin' });
             currentUserData.Nivel_Acesso = 'Admin';

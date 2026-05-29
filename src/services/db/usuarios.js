@@ -2,10 +2,10 @@ import {
   collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp, Timestamp
 } from 'firebase/firestore';
 import { db } from '../../firebase.js';
-import { COLLECTIONS, ADMIN_EMAILS } from './index.js';
+import { COLLECTIONS, ADMIN_EMAIL } from './index.js';
 
 export function isAdmin(userData) {
-  return userData && ADMIN_EMAILS.includes(userData.Email) && userData.Nivel_Acesso === 'Admin';
+  return userData && userData.Email === ADMIN_EMAIL && userData.Nivel_Acesso === 'Admin';
 }
 
 

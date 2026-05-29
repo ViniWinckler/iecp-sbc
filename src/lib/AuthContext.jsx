@@ -3,7 +3,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase.js';
 import { logout as firebaseLogout } from '../services/auth.js';
 import { getUserByEmail, createUser } from '../services/db.js';
-import { ADMIN_EMAILS } from '../services/db/index.js';
 
 const AuthContext = createContext();
 
@@ -27,8 +26,8 @@ export const AuthProvider = ({ children }) => {
         try {
           let profile = await getUserByEmail(firebaseUser.email);
 
-          // Força as permissões de Admin independentemente se já existia
-          if (ADMIN_EMAILS.includes(firebaseUser.email)) {
+          // Força as permissões de Admin (Gmail pessoal) independentemente se já existia
+          if (firebaseUser.email === 'vini.wincklerferreira@gmail.com') {
             if (!profile) {
               profile = await createUser({
                 Firebase_UID: firebaseUser.uid,
