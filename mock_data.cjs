@@ -1,110 +1,139 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('./service-account.json');
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-
+admin.initializeApp({ credential: admin.credential.cert(require('./service-account.json')) });
 const db = admin.firestore();
+const FieldValue = admin.firestore.FieldValue;
 
-async function run() {
-  console.log("1. Atualizando permissão do Vinicius...");
-  const usersRef = db.collection('Usuarios');
-  const snapshot = await usersRef.where('Email', '==', 'vini.wincklerferreira@gmail.com').get();
-  
-  let adminUserId = null;
-  if (snapshot.empty) {
-    console.log("Usuário Vinicius não encontrado. Você precisa logar pelo menos uma vez.");
-  } else {
-    for (const doc of snapshot.docs) {
-      adminUserId = doc.id;
-      await doc.ref.update({
-        Nivel_Acesso: 'Admin',
-        Status: 'Ativo'
-      });
-      console.log(`Permissão atualizada para o doc: ${doc.id}`);
+async function seed() {
+  // 1. Limpar perfil falso do Senai (criado sem UID real)
+  const usersSnap = await db.collection('Usuarios').get();
+  for (const doc of usersSnap.docs) {
+    if (doc.data().Firebase_UID === 'created_by_script') {
+      await doc.ref.delete();
+      console.log('Removido doc falso:', doc.id);
     }
   }
 
-  console.log("2. Criando Ministério de Teste...");
-  const minRef = await db.collection('Ministerios').add({
-    Nome_Ministerio: 'Louvor & Adoração (Teste)',
-    Descricao: 'Equipe responsável pelo momento de louvor nos cultos.',
+  // 2. Ministério de Louvor
+  const minRef = db.collection('Ministerios').doc('ministerio_louvor');
+  await minRef.set({
+    Nome_Ministerio: 'Louvor & Adoração',
+    Descricao: 'Equipe responsável pelo louvor nos cultos.',
     Lider_Responsavel_Email: 'vini.wincklerferreira@gmail.com'
   });
-  console.log(`Ministério criado: ${minRef.id}`);
+  console.log('Ministério criado.');
 
-  console.log("3. Criando Aviso de Teste...");
-  await db.collection('Avisos').add({
-    Titulo: 'Reunião de Alinhamento (Teste)',
-    Descricao: 'Aviso de teste: Teremos uma reunião geral após o culto de domingo para apresentar as novas funcionalidades do app.',
+  // 3. Ministério de Mídia
+  const minRef2 = db.collection('Ministerios').doc('ministerio_midia');
+  await minRef2.set({
+    Nome_Ministerio: 'Mídia & Transmissão',
+    Descricao: 'Responsável pelo streaming e redes sociais da igreja.',
+    Lider_Responsavel_Email: 'vini.wincklerferreira@gmail.com'
+  });
+  console.log('Ministério Mídia criado.');
+
+  // 4. Avisos
+  await db.collection('Avisos').doc('aviso_geral').set({
+    Titulo: 'Bem-vindos ao Portal IECP SBC!',
+    Descricao: 'Este é o portal interno da Igreja Evangélica Cristã Presbiteriana. Aqui você encontra escalas, agenda e comunicados da equipe.',
     Ministerio_ID: null,
-    Data_Hora: admin.firestore.FieldValue.serverTimestamp(),
+    Data_Hora: new Date().toISOString(),
     Autor_Email: 'vini.wincklerferreira@gmail.com'
   });
-  console.log("Aviso criado.");
-
-  console.log("4. Criando Projeto e Tarefas...");
-  const projRef = await db.collection('Projetos').add({
-    Nome_Projeto: 'Reforma do Áudio (Teste)',
-    Descricao: 'Projeto para cabeamento novo no palco e instalação de novos retornos.',
-    Progresso: 50,
-    Status: 'Em Andamento',
-    Data_Criacao: admin.firestore.FieldValue.serverTimestamp()
+  await db.collection('Avisos').doc('aviso_louvor').set({
+    Titulo: 'Ensaio desta semana confirmado',
+    Descricao: 'O ensaio da equipe de louvor será na quarta-feira às 19h30. Presença obrigatória para todos os músicos.',
+    Ministerio_ID: 'ministerio_louvor',
+    Data_Hora: new Date().toISOString(),
+    Autor_Email: 'vini.wincklerferreira@gmail.com'
   });
+  console.log('Avisos criados.');
 
-  await db.collection('Tarefas_Chamados').add({
-    ID_Projeto: projRef.id,
-    Titulo: 'Comprar cabos P10',
-    Descricao: 'Necessitamos de 5 cabos P10 de 10 metros.',
-    Status: 'Pendente',
-    Tipo: 'Tarefa',
-    Data_Criacao: admin.firestore.FieldValue.serverTimestamp()
-  });
+  // 5. Agenda Interna
+  const em2dias = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
+  const em5dias = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+  const em7dias = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  await db.collection('Tarefas_Chamados').add({
-    ID_Projeto: projRef.id,
-    Titulo: 'Soldar conectores do multicabo',
-    Descricao: 'Refazer a solda que está com mau contato no canal 4.',
-    Status: 'Concluido',
-    Tipo: 'Tarefa',
-    Data_Criacao: admin.firestore.FieldValue.serverTimestamp()
-  });
-  console.log("Projetos e tarefas criados.");
-
-  console.log("5. Criando Agenda Interna...");
-  await db.collection('Agenda_Interna').add({
-    Titulo: 'Ensaio Geral (Teste)',
-    Data_Hora: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Daqui a 2 dias
+  await db.collection('Agenda_Interna').doc('agenda_ensaio').set({
+    Titulo: 'Ensaio - Equipe de Louvor',
+    Data_Hora: em2dias,
     Tipo: 'Ensaio',
-    ID_Ministerio: minRef.id,
-    Nome_Ministerio: 'Louvor & Adoração (Teste)',
-    Descricao: 'Ensaio focado nas músicas do culto de Ceia.',
-    Data_Criacao: admin.firestore.FieldValue.serverTimestamp(),
+    ID_Ministerio: 'ministerio_louvor',
+    Nome_Ministerio: 'Louvor & Adoração',
+    Descricao: 'Ensaio geral para o culto de domingo.',
+    Criado_Por: 'vini.wincklerferreira@gmail.com',
+    Data_Criacao: FieldValue.serverTimestamp()
+  });
+  await db.collection('Agenda_Interna').doc('agenda_reuniao').set({
+    Titulo: 'Reunião de Líderes',
+    Data_Hora: em5dias,
+    Tipo: 'Reunião',
+    ID_Ministerio: null,
+    Nome_Ministerio: '',
+    Descricao: 'Reunião mensal de alinhamento com todos os líderes de ministério.',
+    Criado_Por: 'vini.wincklerferreira@gmail.com',
+    Data_Criacao: FieldValue.serverTimestamp()
+  });
+  await db.collection('Agenda_Interna').doc('agenda_culto').set({
+    Titulo: 'Culto de Celebração',
+    Data_Hora: em7dias,
+    Tipo: 'Geral',
+    ID_Ministerio: null,
+    Nome_Ministerio: '',
+    Descricao: 'Culto especial de celebração com a participação de todos os ministérios.',
+    Criado_Por: 'vini.wincklerferreira@gmail.com',
+    Data_Criacao: FieldValue.serverTimestamp()
+  });
+  console.log('Agenda criada.');
+
+  // 6. Escala
+  await db.collection('Escalas').doc('escala_domingo').set({
+    Titulo: 'Culto de Domingo',
+    Data: em7dias,
+    ID_Ministerio: 'ministerio_louvor',
+    Nome_Ministerio: 'Louvor & Adoração',
+    Membros_Escalados: [
+      { email: 'vini.wincklerferreira@gmail.com', nome: 'Vinicius Winckler', funcao: 'Vocal / Guitarra', status: 'pendente' }
+    ],
     Criado_Por: 'vini.wincklerferreira@gmail.com'
   });
-  console.log("Agenda interna criada.");
+  console.log('Escala criada.');
 
-  console.log("6. Criando Escala...");
-  await db.collection('Escalas').add({
-    Titulo: 'Culto de Domingo (Teste)',
-    Data: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // Daqui a 3 dias
-    ID_Ministerio: minRef.id,
-    Nome_Ministerio: 'Louvor & Adoração (Teste)',
-    Membros_Escalados: [
-      {
-        email: 'vini.wincklerferreira@gmail.com',
-        nome: 'Vinicius Winckler',
-        funcao: 'Vocal',
-        status: 'pendente'
-      }
-    ],
-    Criado_Por: adminUserId || 'vini.wincklerferreira@gmail.com'
+  // 7. Projeto com tarefas
+  await db.collection('Projetos').doc('projeto_audio').set({
+    Nome_Projeto: 'Reforma do Sistema de Áudio',
+    Descricao: 'Atualização do cabeamento e equipamentos do palco.',
+    Progresso: 33,
+    Status: 'Em Andamento',
+    Data_Criacao: FieldValue.serverTimestamp()
   });
-  console.log("Escala criada.");
+  await db.collection('Tarefas_Chamados').doc('tarefa_1').set({
+    ID_Projeto: 'projeto_audio',
+    Titulo: 'Comprar cabos P10 (5 unidades)',
+    Descricao: 'Cabos de 10m para os retornos do palco.',
+    Status: 'Concluido',
+    Tipo: 'Tarefa',
+    Data_Criacao: FieldValue.serverTimestamp()
+  });
+  await db.collection('Tarefas_Chamados').doc('tarefa_2').set({
+    ID_Projeto: 'projeto_audio',
+    Titulo: 'Instalar rack de equipamentos',
+    Descricao: 'Fixar o rack no canto do palco e organizar os equipamentos.',
+    Status: 'Em Andamento',
+    Tipo: 'Tarefa',
+    Data_Criacao: FieldValue.serverTimestamp()
+  });
+  await db.collection('Tarefas_Chamados').doc('tarefa_3').set({
+    ID_Projeto: 'projeto_audio',
+    Titulo: 'Testar todos os canais do console',
+    Descricao: 'Verificar gain, EQ e roteamento de cada canal.',
+    Status: 'Pendente',
+    Tipo: 'Tarefa',
+    Data_Criacao: FieldValue.serverTimestamp()
+  });
+  console.log('Projetos e tarefas criados.');
 
-  console.log("Tudo pronto! Pressione Ctrl+C para sair (ou o script terminará em instantes).");
+  console.log('\n✅ Banco de dados populado com sucesso!');
   process.exit(0);
 }
 
-run().catch(console.error);
+seed().catch(e => { console.error(e); process.exit(1); });

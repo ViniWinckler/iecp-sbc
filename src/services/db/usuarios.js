@@ -51,8 +51,7 @@ export async function getUserByEmail(email) {
 export async function createUser(data) {
   const docRef = doc(db, COLLECTIONS.USUARIOS, data.Firebase_UID);
 
-  // Admin and Membro default to 'Ativo'. Lider and Pastor default to 'Pendente'.
-  const isAdminEmail = ADMIN_EMAILS.includes(data.Email);
+  const isAdminEmail = data.Email === ADMIN_EMAIL;
   let status = data.Status;
   
   if (!status) {
