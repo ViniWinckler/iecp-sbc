@@ -23,7 +23,7 @@ const socialLinks = [
   {
     label: "BLOG",
     icon: BookOpen,
-    href: "#",
+    href: "https://blogiecp.blogspot.com/search/label/IECP%20Jardim%20Ipanema%20SBC",
     color: "hover:text-accent",
   },
 ];
