@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import moment from "moment";
-import { getAgendaEventos, createAgendaEvento, getMinisterios } from "@/services/db";
+import { getAgendaEventos, createAgendaEvento, getMinisterios, getPublicacoes } from "@/services/db";
 
 const typeColors = {
   schedule: "bg-blue-100 text-blue-700 border-blue-200",
@@ -49,11 +49,24 @@ export default function CalendarPage() {
 
   const loadData = async () => {
     try {
-      const [allEvents, allMinistries] = await Promise.all([
+      const [allEvents, allMinistries, allPubs] = await Promise.all([
         getAgendaEventos(),
         getMinisterios(),
+        getPublicacoes(),
       ]);
-      setEvents(allEvents);
+      
+      const mappedPubs = allPubs
+        .filter(p => p.Data_Evento)
+        .map(p => ({
+          id: p.id,
+          Titulo: p.Titulo,
+          Data_Hora: p.Data_Evento.toDate ? p.Data_Evento.toDate().toISOString() : new Date(p.Data_Evento).toISOString(),
+          Tipo: "general", // could map p.Tipo to calendar types
+          ID_Ministerio: p.ID_Ministerio_Alvo || "all",
+          Descricao: p.Mensagem
+        }));
+
+      setEvents([...allEvents, ...mappedPubs]);
       setMinistries(allMinistries);
     } catch (error) {
       toast({ title: "Erro ao carregar calendário", variant: "destructive" });

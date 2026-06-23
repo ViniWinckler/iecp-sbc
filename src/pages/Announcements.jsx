@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/AuthContext";
-import { getPublicacoes, createPublicacao, deletePublicacao, getMinisterios, getMinisteriosDoUsuario } from "@/services/db";
+import { getPublicacoes, createPublicacao, updatePublicacao, deletePublicacao, getMinisterios, getMinisteriosDoUsuario } from "@/services/db";
 import {
   Megaphone, Plus, Globe, Users, Trash2, Pencil,
   Calendar, PartyPopper, Bell, Info, Check
