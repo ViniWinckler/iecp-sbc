@@ -67,11 +67,11 @@ export default function PublicEvents() {
                 transition={{ duration: 0.4, delay: i * 0.08 }}
                 className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group"
               >
-                {event.image_url ? (
+                {event.Imagem_URL || event.image_url ? (
                   <div className="h-48 overflow-hidden">
                     <img
-                      src={event.image_url}
-                      alt={event.title}
+                      src={event.Imagem_URL || event.image_url}
+                      alt={event.Titulo || event.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
@@ -83,17 +83,27 @@ export default function PublicEvents() {
                 <div className="p-5">
                   <div className="flex items-center gap-2 text-accent text-sm font-semibold mb-1 uppercase tracking-wide">
                     <span className="text-2xl font-bold font-heading leading-none">
-                      {moment(event.Data_Hora || event.date).format("D")}
+                      {moment(
+                        event.Data_Evento?.toDate ? event.Data_Evento.toDate() : 
+                        (event.Data_Hora || event.date || (event.Data_Publicacao?.toDate ? event.Data_Publicacao.toDate() : new Date()))
+                      ).format("D")}
                     </span>
-                    <span>{moment(event.Data_Hora || event.date).format("MMM.").toUpperCase()}</span>
+                    <span>{moment(
+                        event.Data_Evento?.toDate ? event.Data_Evento.toDate() : 
+                        (event.Data_Hora || event.date || (event.Data_Publicacao?.toDate ? event.Data_Publicacao.toDate() : new Date()))
+                      ).format("MMM.").toUpperCase()}</span>
                   </div>
                   <h3 className="font-heading text-lg font-semibold mb-1">{event.Titulo || event.title}</h3>
                   <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-2">
                     <Clock className="w-3.5 h-3.5" />
-                    Início às {moment(event.Data_Hora || event.date).format("HH:mm")}
+                    {event.Data_Evento || event.Data_Hora || event.date ? `Início às ${moment(
+                        event.Data_Evento?.toDate ? event.Data_Evento.toDate() : (event.Data_Hora || event.date)
+                      ).format("HH:mm")}` : `Publicado às ${moment(
+                        event.Data_Publicacao?.toDate ? event.Data_Publicacao.toDate() : new Date()
+                      ).format("HH:mm")}`}
                   </div>
-                  {(event.Descricao || event.description) && (
-                    <p className="text-muted-foreground text-sm line-clamp-3">{event.Descricao || event.description}</p>
+                  {(event.Mensagem || event.Descricao || event.description) && (
+                    <p className="text-muted-foreground text-sm line-clamp-3">{event.Mensagem || event.Descricao || event.description}</p>
                   )}
                   {(event.Local || event.location) && (
                     <div className="flex items-center gap-1.5 text-muted-foreground text-sm mt-3">
