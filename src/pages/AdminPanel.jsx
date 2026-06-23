@@ -100,12 +100,13 @@ export default function AdminPanel() {
     }
   };
 
-  const pendingUsers  = allUsers.filter(u => u.Status !== "Ativo" && u.Status !== "Rejeitado");
-  const activeUsers   = allUsers.filter(u => u.Status === "Ativo");
-  const rejectedUsers = allUsers.filter(u => u.Status === "Rejeitado");
+  const pendingUsers    = allUsers.filter(u => u.Status === "Pendente");
+  const incompleteUsers = allUsers.filter(u => !u.Status || (u.Status !== "Ativo" && u.Status !== "Pendente" && u.Status !== "Rejeitado"));
+  const activeUsers     = allUsers.filter(u => u.Status === "Ativo");
+  const rejectedUsers   = allUsers.filter(u => u.Status === "Rejeitado");
 
-  const filteredPendingUsers = searchEmail.trim() 
-    ? pendingUsers.filter(u => u.Email.toLowerCase().includes(searchEmail.toLowerCase()))
+  const filteredPendingUsers = searchEmail.trim()
+    ? pendingUsers.filter(u => u.Email?.toLowerCase().includes(searchEmail.toLowerCase()))
     : pendingUsers;
 
   const UserCard = ({ u, showActions = true }) => {
@@ -216,8 +217,8 @@ export default function AdminPanel() {
       </div>
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="pending" className="gap-2">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="pending" className="gap-1 text-xs">
             Aprovações
             {pendingUsers.length > 0 && (
               <span className="bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -225,8 +226,16 @@ export default function AdminPanel() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="active">Membros Ativos</TabsTrigger>
-          <TabsTrigger value="rejected">Rejeitados</TabsTrigger>
+          <TabsTrigger value="active" className="text-xs">Ativos</TabsTrigger>
+          <TabsTrigger value="incomplete" className="gap-1 text-xs">
+            Incompletos
+            {incompleteUsers.length > 0 && (
+              <span className="bg-yellow-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {incompleteUsers.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="rejected" className="text-xs">Rejeitados</TabsTrigger>
         </TabsList>
 
         {/* Aprovações Pendentes */}
@@ -268,6 +277,19 @@ export default function AdminPanel() {
             </div>
           ) : (
             activeUsers.map(u => <UserCard key={u.id} u={u} />)
+          )}
+        </TabsContent>
+
+        {/* Incompletos */}
+        <TabsContent value="incomplete" className="mt-4 space-y-3">
+          <p className="text-xs text-muted-foreground mb-3">Contas criadas sem concluir o cadastro ou geradas por testes. Você pode deletá-las.</p>
+          {incompleteUsers.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p>Nenhuma conta incompleta</p>
+            </div>
+          ) : (
+            incompleteUsers.map(u => <UserCard key={u.id} u={u} showActions={true} />)
           )}
         </TabsContent>
 

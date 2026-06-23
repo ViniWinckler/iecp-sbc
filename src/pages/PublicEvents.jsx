@@ -3,7 +3,7 @@ import { Calendar, MapPin, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import moment from "moment";
 import "moment/locale/pt-br";
-import { getEventosPublicos } from "@/services/db";
+import { getPublicacoes } from "@/services/db";
 
 moment.locale("pt-br");
 
@@ -12,8 +12,17 @@ export default function PublicEvents() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getEventosPublicos()
-      .then(setEvents)
+    // Fetch publicacoes visible to public (Publico or Ambos) with an event date or type
+    getPublicacoes({ visibilidade: "Publico" })
+      .then(data => {
+        // Sort by event date if available, otherwise by publish date
+        const sorted = [...data].sort((a, b) => {
+          const dA = a.Data_Evento?.seconds || a.Data_Publicacao?.seconds || 0;
+          const dB = b.Data_Evento?.seconds || b.Data_Publicacao?.seconds || 0;
+          return dA - dB;
+        });
+        setEvents(sorted);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

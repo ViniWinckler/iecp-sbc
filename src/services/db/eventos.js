@@ -1,86 +1,103 @@
 import {
-  collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp, Timestamp
+  collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, Timestamp
 } from 'firebase/firestore';
 import { db } from '../../firebase.js';
-import { COLLECTIONS, ADMIN_EMAIL } from './index.js';
+import { COLLECTIONS } from './index.js';
 
-export async function getAvisos(escopo = null, ministerioId = null) {
+// =============================================
+// PUBLICACOES (Unified Avisos + Eventos)
+// Schema:
+//   Titulo, Mensagem, Tipo, Visibilidade, Escopo,
+//   ID_Ministerio_Alvo, Imagem_URL, Data_Evento,
+//   Data_Publicacao, Criado_Por_Email
+// Tipo: Aviso | Evento | Aniversario | Reuniao | Outros
+// Visibilidade: Interno | Publico | Ambos
+// Escopo: Global | Ministerio (only for Interno/Ambos)
+// =============================================
+
+export async function getPublicacoes({ visibilidade = null, escopo = null, ministerioId = null } = {}) {
   try {
-    let q = query(collection(db, COLLECTIONS.AVISOS));
-    
+    const snapshot = await getDocs(collection(db, COLLECTIONS.AVISOS));
+    let data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    if (visibilidade) {
+      data = data.filter(d => d.Visibilidade === visibilidade || d.Visibilidade === 'Ambos');
+    }
     if (escopo === 'Global') {
-      q = query(q, where('Escopo', '==', 'Global'));
-    } else if (escopo === 'Ministerio' && ministerioId) {
-      q = query(q, where('Escopo', '==', 'Ministerio'), where('ID_Ministerio_Alvo', '==', ministerioId));
+      data = data.filter(d => d.Escopo === 'Global' || !d.Escopo);
+    }
+    if (escopo === 'Ministerio' && ministerioId) {
+      data = data.filter(d => d.Escopo === 'Ministerio' && d.ID_Ministerio_Alvo === ministerioId);
     }
 
-    const snapshot = await getDocs(q);
-    const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    // Sort client-side by Data_Publicacao (descending)
     return data.sort((a, b) => {
-      const timeA = a.Data_Publicacao?.seconds || 0;
-      const timeB = b.Data_Publicacao?.seconds || 0;
-      return timeB - timeA;
+      const tA = a.Data_Publicacao?.seconds || 0;
+      const tB = b.Data_Publicacao?.seconds || 0;
+      return tB - tA;
     });
   } catch (err) {
-    console.error('getAvisos error:', err);
+    console.error('getPublicacoes error:', err);
     return [];
   }
 }
 
+// Backward compat
+export async function getAvisos(escopo = null, ministerioId = null) {
+  return getPublicacoes({ visibilidade: 'Interno', escopo, ministerioId });
+}
 
-export async function createAviso(data) {
+export async function createPublicacao(data) {
   const docRef = await addDoc(collection(db, COLLECTIONS.AVISOS), {
     Titulo: data.Titulo,
-    Mensagem: data.Mensagem,
-    Escopo: data.Escopo,
+    Mensagem: data.Mensagem || '',
+    Tipo: data.Tipo || 'Aviso',
+    Visibilidade: data.Visibilidade || 'Interno',
+    Escopo: data.Escopo || 'Global',
     ID_Ministerio_Alvo: data.ID_Ministerio_Alvo || null,
+    Imagem_URL: data.Imagem_URL || '',
+    Data_Evento: data.Data_Evento ? Timestamp.fromDate(new Date(data.Data_Evento)) : null,
     Data_Publicacao: serverTimestamp(),
     Criado_Por_Email: data.Criado_Por_Email
   });
   return { id: docRef.id, ...data };
 }
 
+// Backward compat
+export async function createAviso(data) {
+  return createPublicacao({ ...data, Tipo: 'Aviso', Visibilidade: data.Visibilidade || 'Interno' });
+}
+
+export async function updatePublicacao(id, data) {
+  await updateDoc(doc(db, COLLECTIONS.AVISOS, id), data);
+}
 
 export async function deleteAviso(id) {
   await deleteDoc(doc(db, COLLECTIONS.AVISOS, id));
 }
 
-// =============================================
-// MINISTÉRIOS
-// =============================================
+// Alias
+export const deletePublicacao = deleteAviso;
 
 // =============================================
-// EVENTOS_PUBLICOS
+// EVENTOS_PUBLICOS (legacy - kept for backward compat)
 // =============================================
-
 
 export async function getEventosPublicos() {
-  const q = query(
-    collection(db, COLLECTIONS.EVENTOS_PUBLICOS),
-    orderBy('Data_Hora', 'asc')
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Now returns publicacoes visible to public (Publico or Ambos)
+  return getPublicacoes({ visibilidade: 'Publico' });
 }
 
-
 export async function createEventoPublico(data) {
-  const docRef = await addDoc(collection(db, COLLECTIONS.EVENTOS_PUBLICOS), {
-    Titulo: data.Titulo,
-    Descricao: data.Descricao || '',
-    Data_Hora: Timestamp.fromDate(new Date(data.Data_Hora)),
-    Imagem_URL: data.Imagem_URL || '',
-    Destaque: data.Destaque || 'Não'
-  });
-  return { id: docRef.id, ...data };
+  return createPublicacao({ ...data, Tipo: data.Tipo || 'Evento', Visibilidade: 'Publico', Escopo: 'Global' });
+}
+
+export async function deleteEventoPublico(id) {
+  await deleteDoc(doc(db, COLLECTIONS.AVISOS, id));
 }
 
 // =============================================
 // BANNERS_HOME
 // =============================================
-
 
 export async function getBannersAtivos() {
   const q = query(
@@ -91,7 +108,6 @@ export async function getBannersAtivos() {
   const snapshot = await getDocs(q);
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 }
-
 
 export async function createBanner(data) {
   const docRef = await addDoc(collection(db, COLLECTIONS.BANNERS_HOME), {
@@ -104,36 +120,17 @@ export async function createBanner(data) {
   return { id: docRef.id, ...data };
 }
 
-// =============================================
-// Utility: Get user's ministerios (via accepted invites)
-// =============================================
-
-
-export async function deleteEventoPublico(id) {
-  await deleteDoc(doc(db, COLLECTIONS.EVENTOS_PUBLICOS, id));
-}
-
-// =============================================
-// BANNERS_HOME (extras)
-// =============================================
-
-
 export async function getAllBanners() {
-  const q = query(
-    collection(db, COLLECTIONS.BANNERS_HOME),
-    orderBy('Ordem', 'asc')
-  );
   try {
+    const q = query(collection(db, COLLECTIONS.BANNERS_HOME), orderBy('Ordem', 'asc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-  } catch (e) {
+  } catch {
     const snapshot = await getDocs(collection(db, COLLECTIONS.BANNERS_HOME));
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 }
 
-
 export async function deleteBanner(id) {
   await deleteDoc(doc(db, COLLECTIONS.BANNERS_HOME, id));
 }
-

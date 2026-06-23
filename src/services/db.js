@@ -75,8 +75,12 @@ export {
 } from './db/projetos.js';
 export {
   getAvisos,
+  getPublicacoes,
   createAviso,
+  createPublicacao,
+  updatePublicacao,
   deleteAviso,
+  deletePublicacao,
   getEventosPublicos,
   createEventoPublico,
   deleteEventoPublico,
