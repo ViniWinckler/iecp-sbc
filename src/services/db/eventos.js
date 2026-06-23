@@ -20,9 +20,15 @@ export async function getPublicacoes({ visibilidade = null, escopo = null, minis
     const snapshot = await getDocs(collection(db, COLLECTIONS.AVISOS));
     let data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    if (visibilidade) {
-      data = data.filter(d => d.Visibilidade === visibilidade || d.Visibilidade === 'Ambos');
+    if (visibilidade === 'Publico') {
+      // Public site: show Publico and Ambos; exclude pure-internal and legacy (no Visibilidade)
+      data = data.filter(d => d.Visibilidade === 'Publico' || d.Visibilidade === 'Ambos');
+    } else if (visibilidade === 'Interno') {
+      // Internal screen: show Interno and Ambos and legacy docs (no Visibilidade = treat as Interno)
+      data = data.filter(d => !d.Visibilidade || d.Visibilidade === 'Interno' || d.Visibilidade === 'Ambos');
     }
+    // if no visibilidade filter, return all
+
     if (escopo === 'Global') {
       data = data.filter(d => d.Escopo === 'Global' || !d.Escopo);
     }

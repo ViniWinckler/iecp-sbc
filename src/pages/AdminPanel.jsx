@@ -56,7 +56,7 @@ export default function AdminPanel() {
 
   const handleApprove = async (u) => {
     try {
-      await updateUser(u.Firebase_UID || u.id, { Status: "Ativo" });
+      await updateUser(u.id, { Status: "Ativo" });
       toast({ title: `${u.Nome_Exibicao} aprovado(a)!` });
       loadUsers();
     } catch (e) {
@@ -66,7 +66,7 @@ export default function AdminPanel() {
 
   const handleReject = async (u) => {
     try {
-      await updateUser(u.Firebase_UID || u.id, { Status: "Rejeitado" });
+      await updateUser(u.id, { Status: "Rejeitado" });
       toast({ title: `${u.Nome_Exibicao} rejeitado(a).` });
       loadUsers();
     } catch (e) {
@@ -249,6 +249,10 @@ export default function AdminPanel() {
                className="border-0 bg-transparent focus-visible:ring-0 shadow-none h-8 w-full"
             />
           </div>
+          <p className="text-xs text-muted-foreground mb-3 px-1">
+            <Shield className="w-3.5 h-3.5 inline-block mr-1" />
+            Apenas usuários que solicitam cargo de <strong>Líder</strong> ou <strong>Pastor</strong> passam por esta aba. Cadastros de Membro são aprovados automaticamente.
+          </p>
 
           {loading ? (
             <div className="space-y-3">

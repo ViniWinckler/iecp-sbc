@@ -10,7 +10,7 @@ import { toast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
 import { 
-  getMinisterios, createMinisterio, deleteMinisterio,
+  getMinisterios, createMinisterio, deleteMinisterio, updateMinisterio,
   getConvitesByMinisterio, createConvite, updateConviteStatus
 } from "@/services/db";
 
@@ -24,6 +24,10 @@ export default function Ministries() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [memberToRemove, setMemberToRemove] = useState(null);
+  const [editMinistry, setEditMinistry] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [ministryToDelete, setMinistryToDelete] = useState(null);
 
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -108,6 +112,27 @@ export default function Ministries() {
     }
   };
 
+  const handleEditMinistry = async () => {
+    if (!editName.trim()) { toast({ title: "Nome obrigatório", variant: "destructive" }); return; }
+    try {
+      await updateMinisterio(editMinistry.id, { Nome_Ministerio: editName, Descricao: editDesc });
+      toast({ title: "Ministério atualizado!" });
+      setEditMinistry(null);
+      loadData();
+    } catch { toast({ title: "Erro ao atualizar", variant: "destructive" }); }
+  };
+
+  const handleDeleteMinistry = async () => {
+    if (!ministryToDelete) return;
+    try {
+      await deleteMinisterio(ministryToDelete.id);
+      toast({ title: "Ministério removido." });
+      setMinistryToDelete(null);
+      if (selectedMinistry?.id === ministryToDelete.id) setSelectedMinistry(null);
+      loadData();
+    } catch { toast({ title: "Erro ao deletar", variant: "destructive" }); }
+  };
+
   const handleRemoveMember = async () => {
     if (!memberToRemove) return;
     try {
@@ -179,7 +204,21 @@ export default function Ministries() {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-heading font-semibold text-lg">{ministry.Nome_Ministerio}</h3>
-                    {isSelected && <Badge variant="secondary">{mMembers.length} convites</Badge>}
+                    <div className="flex items-center gap-1">
+                      {isSelected && <Badge variant="secondary">{mMembers.length} convites</Badge>}
+                      {isMyMinistry && (
+                        <>
+                          <button
+                            onClick={e => { e.stopPropagation(); setEditName(ministry.Nome_Ministerio); setEditDesc(ministry.Descricao || ""); setEditMinistry(ministry); }}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                          ><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                          <button
+                            onClick={e => { e.stopPropagation(); setMinistryToDelete(ministry); }}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          ><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                        </>
+                      )}
+                    </div>
                   </div>
                   {ministry.Descricao && (
                     <p className="text-muted-foreground text-sm mb-3">{ministry.Descricao}</p>
@@ -275,11 +314,50 @@ export default function Ministries() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 mt-4">
-            <Button variant="outline" onClick={() => setMemberToRemove(null)} className="flex-1">
-              Cancelar
-            </Button>
+            <Button variant="outline" onClick={() => setMemberToRemove(null)} className="flex-1">Cancelar</Button>
             <Button variant="destructive" onClick={handleRemoveMember} className="flex-1 gap-2">
               <Trash2 className="w-4 h-4" /> Remover
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Ministry Dialog */}
+      <Dialog open={!!editMinistry} onOpenChange={open => { if (!open) setEditMinistry(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="font-heading">Editar Ministério</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label>Nome</Label>
+              <Input value={editName} onChange={e => setEditName(e.target.value)} className="mt-1" />
+            </div>
+            <div>
+              <Label>Descrição</Label>
+              <Textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} className="mt-1" />
+            </div>
+            <Button onClick={handleEditMinistry} className="w-full">Salvar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Ministry Confirmation */}
+      <Dialog open={!!ministryToDelete} onOpenChange={open => { if (!open) setMinistryToDelete(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+              </div>
+              <DialogTitle className="font-heading text-lg">Deletar Ministério</DialogTitle>
+            </div>
+            <DialogDescription>
+              Tem certeza que deseja deletar <strong>{ministryToDelete?.Nome_Ministerio}</strong>? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 mt-4">
+            <Button variant="outline" onClick={() => setMinistryToDelete(null)} className="flex-1">Cancelar</Button>
+            <Button variant="destructive" onClick={handleDeleteMinistry} className="flex-1 gap-2">
+              <Trash2 className="w-4 h-4" /> Deletar
             </Button>
           </DialogFooter>
         </DialogContent>
