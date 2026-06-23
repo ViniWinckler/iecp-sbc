@@ -80,8 +80,9 @@ export default function Announcements() {
       const myMinIds = myMin.map(m => m.id);
       // Filter: admin sees all; others see Internal-Global + their ministries
       const filtered = all.filter(p => {
-        if (p.Visibilidade === "Publico") return false; // internal screen hides pure-public
         if (isAdmin) return true;
+        if (user?.email && p.Criado_Por_Email === user.email) return true;
+        if (p.Visibilidade === "Publico") return false; // internal screen hides pure-public from regular members
         if (p.Escopo === "Global") return true;
         return myMinIds.includes(p.ID_Ministerio_Alvo);
       });
