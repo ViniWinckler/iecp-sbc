@@ -76,17 +76,13 @@ export async function loginWithGoogle() {
  */
 export async function completeRegistration(displayName, role, minName) {
   const user = auth.currentUser;
-  if (!user) throw new Error('No authenticated user');
+  if (!user) throw new Error('Nenhum usuário autenticado.');
 
-  // Check if this is the first user in the system or if it's the specified Super Admin
-  const { getAllUsers, createMinisterio, COLLECTIONS } = await import('./db.js');
-  const allUsers = await getAllUsers();
-  
-  let finalRole = role;
+  let finalRole = role || 'Membro';
   if (user.email === 'vini.wincklerferreira@gmail.com') {
     finalRole = 'Admin';
-  } else if (!finalRole) {
-    finalRole = allUsers.length === 0 ? 'Admin' : 'Membro';
+  } else if (finalRole === 'Admin') {
+    finalRole = 'Membro';
   }
 
   const userData = await createUser({
@@ -97,11 +93,11 @@ export async function completeRegistration(displayName, role, minName) {
     Nivel_Acesso: finalRole
   });
 
-  // If leader created a ministry during onboarding
   if (finalRole === 'Lider' && minName) {
+    const { createMinisterio } = await import('./db.js');
     await createMinisterio({
       Nome_Ministerio: minName,
-      Descricao: 'MinistÃ©rio criado durante o cadastro.',
+      Descricao: 'Ministério criado durante o cadastro.',
       Lider_Responsavel_Email: user.email
     });
   }

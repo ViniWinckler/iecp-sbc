@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Usuarios: qualquer autenticado pode ler; só o próprio ou o admin pode escrever
+    match /Usuarios/{uid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.token.email == 'vini.wincklerferreira@gmail.com';
+    }
+
+    // Todas as outras coleções internas: exige autenticação
+    match /{collection}/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}

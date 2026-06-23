@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase.js';
 import { logout as firebaseLogout } from '../services/auth.js';
-import { getUserByEmail, createUser } from '../services/db.js';
+import { getUserByEmail, createUser, getUser, updateUser } from '../services/db.js';
 
 const AuthContext = createContext();
 
@@ -24,9 +24,11 @@ export const AuthProvider = ({ children }) => {
         setUser(firebaseUser);
         setIsAuthenticated(true);
         try {
-          let profile = await getUserByEmail(firebaseUser.email);
+          // Busca primeiro por UID (mais confiável), depois por email
+          let profile = await getUser(firebaseUser.uid);
+          if (!profile) profile = await getUserByEmail(firebaseUser.email);
 
-          // Força as permissões de Admin (Gmail pessoal) independentemente se já existia
+          // Força Admin para o email pessoal e sincroniza o UID real no doc
           if (firebaseUser.email === 'vini.wincklerferreira@gmail.com') {
             if (!profile) {
               profile = await createUser({
@@ -37,11 +39,16 @@ export const AuthProvider = ({ children }) => {
                 Nivel_Acesso: 'Admin',
                 Status: 'Ativo'
               });
-            } else if (profile.Nivel_Acesso !== 'Admin' || profile.Status !== 'Ativo') {
-              const { updateUser } = await import('../services/db/usuarios.js');
-              await updateUser(profile.id, { Nivel_Acesso: 'Admin', Status: 'Ativo' });
-              profile.Nivel_Acesso = 'Admin';
-              profile.Status = 'Ativo';
+            } else {
+              // Garante que o doc tem o UID correto e permissão Admin
+              const updates = {};
+              if (profile.Firebase_UID !== firebaseUser.uid) updates.Firebase_UID = firebaseUser.uid;
+              if (profile.Nivel_Acesso !== 'Admin') updates.Nivel_Acesso = 'Admin';
+              if (profile.Status !== 'Ativo') updates.Status = 'Ativo';
+              if (Object.keys(updates).length > 0) {
+                await updateUser(profile.id, updates);
+                profile = { ...profile, ...updates };
+              }
             }
           }
 

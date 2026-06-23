@@ -46,22 +46,23 @@ export default function MemberLogin() {
     setLoading(true);
     try {
       if (mode === "register") {
-        if (!name.trim()) { toast.error("Informe seu nome completo."); return; }
+        if (!name.trim()) { toast.error("Informe seu nome completo."); setLoading(false); return; }
+        if (role === "Lider" && !ministryName.trim()) { toast.error("Informe o nome do seu ministério."); setLoading(false); return; }
         await registerWithEmail(email, password, name, role, role === "Lider" ? ministryName : null);
-        toast.success("Cadastro realizado! O login prosseguirá automaticamente.");
-        // O onAuthStateChanged vai rodar e recarregar o perfil
+        toast.success("Cadastro realizado! Entrando no portal...");
       } else {
         await loginWithEmail(email, password);
-        // Redirecionamento feito pelo useEffect acima
       }
     } catch (err) {
-      // Mensagens amigáveis para erros do Firebase
-      const msg = err.code === "auth/user-not-found"      ? "E-mail não encontrado."
-                : err.code === "auth/wrong-password"       ? "Senha incorreta."
-                : err.code === "auth/email-already-in-use" ? "Este e-mail já está cadastrado."
-                : err.code === "auth/weak-password"        ? "A senha deve ter pelo menos 6 caracteres."
+      const msg = err.code === "auth/user-not-found"      ? "E-mail não encontrado. Verifique ou crie uma conta."
+                : err.code === "auth/wrong-password"       ? "Senha incorreta. Tente novamente."
                 : err.code === "auth/invalid-credential"   ? "E-mail ou senha inválidos."
-                : err.message || "Ocorreu um erro.";
+                : err.code === "auth/email-already-in-use" ? "Este e-mail já está cadastrado. Faça o login."
+                : err.code === "auth/weak-password"        ? "Senha fraca. Use pelo menos 6 caracteres."
+                : err.code === "auth/invalid-email"        ? "E-mail inválido."
+                : err.code === "auth/too-many-requests"    ? "Muitas tentativas. Aguarde alguns minutos."
+                : err.code === "auth/network-request-failed" ? "Erro de conexão. Verifique sua internet."
+                : err.message || "Ocorreu um erro. Tente novamente.";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -70,16 +71,16 @@ export default function MemberLogin() {
 
   const handleGoogleComplete = async (e) => {
     e.preventDefault();
+    if (!name.trim()) { toast.error("Informe seu nome completo."); return; }
+    if (role === "Lider" && !ministryName.trim()) { toast.error("Informe o nome do seu ministério."); return; }
     setLoading(true);
     try {
-      if (!name.trim()) { toast.error("Informe seu nome completo."); return; }
       const { completeRegistration } = await import("@/services/auth");
       await completeRegistration(name, role, role === "Lider" ? ministryName : null);
-      toast.success("Cadastro finalizado!");
-      window.location.reload(); // Recarrega para o AuthContext pegar o novo perfil
+      toast.success("Cadastro finalizado! Redirecionando...");
+      setTimeout(() => window.location.href = '/dashboard', 1000);
     } catch (err) {
       toast.error(err.message || "Erro ao concluir cadastro.");
-    } finally {
       setLoading(false);
     }
   };
