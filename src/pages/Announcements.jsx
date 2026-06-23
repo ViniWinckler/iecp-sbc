@@ -302,7 +302,7 @@ export default function Announcements() {
                 className="bg-card border border-border rounded-xl p-5 relative group"
               >
                 {canDel && (
-                  <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100">
+                  <div className="absolute top-4 right-4 flex gap-1">
                     <button
                       onClick={() => handleEdit(p)}
                       className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"

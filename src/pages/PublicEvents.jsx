@@ -15,11 +15,11 @@ export default function PublicEvents() {
     // Fetch publicacoes visible to public (Publico or Ambos) with an event date or type
     getPublicacoes({ visibilidade: "Publico" })
       .then(data => {
-        // Sort by event date if available, otherwise by publish date
+        // Sort by event date if available, otherwise by publish date (newest/future first)
         const sorted = [...data].sort((a, b) => {
           const dA = a.Data_Evento?.seconds || a.Data_Publicacao?.seconds || 0;
           const dB = b.Data_Evento?.seconds || b.Data_Publicacao?.seconds || 0;
-          return dA - dB;
+          return dB - dA;
         });
         setEvents(sorted);
       })
