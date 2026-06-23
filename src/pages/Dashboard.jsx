@@ -274,13 +274,19 @@ export default function Dashboard() {
               <div key={a.id} className="border-l-2 border-accent pl-4 py-2">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium text-sm">{a.Titulo}</h4>
-                  <Badge variant={!a.Ministerio_ID ? "default" : "secondary"} className="text-xs">
-                    {!a.Ministerio_ID ? "Geral" : "Ministério"}
+                  <Badge variant={!a.ID_Ministerio_Alvo ? "default" : "secondary"} className="text-[10px]">
+                    {!a.ID_Ministerio_Alvo ? "Geral" : "Ministério"}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px]">
+                    {a.Tipo || "Aviso"}
                   </Badge>
                 </div>
-                <p className="text-muted-foreground text-sm line-clamp-2">{a.Descricao}</p>
+                {a.Imagem_URL && (
+                  <img src={a.Imagem_URL} alt={a.Titulo} className="mt-1 mb-2 w-full max-h-32 object-cover rounded-md border border-border" />
+                )}
+                <p className="text-muted-foreground text-sm line-clamp-2">{a.Mensagem || a.Descricao}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {moment(a.Data_Hora).fromNow()}
+                  {a.Data_Publicacao ? moment(a.Data_Publicacao.toDate ? a.Data_Publicacao.toDate() : a.Data_Publicacao).fromNow() : moment().fromNow()}
                 </p>
               </div>
             ))}
