@@ -17,17 +17,26 @@ import { COLLECTIONS } from './index.js';
 
 export async function getPublicacoes({ visibilidade = null, escopo = null, ministerioId = null } = {}) {
   try {
-    const snapshot = await getDocs(collection(db, COLLECTIONS.AVISOS));
+    let q;
+    
+    // Se for requisição pública (sem login no site), devemos usar query no banco
+    // para não esbarrar nas regras de segurança do Firestore.
+    if (visibilidade === 'Publico') {
+      q = query(
+        collection(db, COLLECTIONS.AVISOS),
+        where('Visibilidade', 'in', ['Publico', 'Ambos'])
+      );
+    } else {
+      q = collection(db, COLLECTIONS.AVISOS);
+    }
+
+    const snapshot = await getDocs(q);
     let data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    if (visibilidade === 'Publico') {
-      // Public site: show Publico and Ambos; exclude pure-internal and legacy (no Visibilidade)
-      data = data.filter(d => d.Visibilidade === 'Publico' || d.Visibilidade === 'Ambos');
-    } else if (visibilidade === 'Interno') {
-      // Internal screen: show Interno and Ambos and legacy docs (no Visibilidade = treat as Interno)
+    // Para requisições internas, mantemos o filtro local para compatibilidade
+    if (visibilidade === 'Interno') {
       data = data.filter(d => !d.Visibilidade || d.Visibilidade === 'Interno' || d.Visibilidade === 'Ambos');
     }
-    // if no visibilidade filter, return all
 
     if (escopo === 'Global') {
       data = data.filter(d => d.Escopo === 'Global' || !d.Escopo);
