@@ -100,7 +100,7 @@ export default function AdminPanel() {
     }
   };
 
-  const pendingUsers  = allUsers.filter(u => u.Status === "Pendente");
+  const pendingUsers  = allUsers.filter(u => u.Status !== "Ativo" && u.Status !== "Rejeitado");
   const activeUsers   = allUsers.filter(u => u.Status === "Ativo");
   const rejectedUsers = allUsers.filter(u => u.Status === "Rejeitado");
 
