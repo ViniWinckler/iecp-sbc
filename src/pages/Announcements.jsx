@@ -107,7 +107,8 @@ export default function Announcements() {
     setIsSubmitting(true);
     try {
       const email = user?.email || userProfile?.Email;
-      await createPublicacao({ ...form, Criado_Por_Email: email });
+      const nome = userProfile?.Nome_Exibicao || user?.displayName || email?.split('@')[0] || "Membro";
+      await createPublicacao({ ...form, Criado_Por_Email: email, Autor_Nome: nome });
       toast({ title: "Publicação criada com sucesso!" });
       setShowCreate(false);
       setForm(EMPTY_FORM);
@@ -352,7 +353,7 @@ export default function Announcements() {
                     )}
 
                     <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Por: {p.Criado_Por_Email}</span>
+                      <span>Por: {p.Autor_Nome || p.Criado_Por_Email}</span>
                       <span>{p.Data_Publicacao ? moment(p.Data_Publicacao.toDate()).fromNow() : "Agora"}</span>
                     </div>
                   </div>

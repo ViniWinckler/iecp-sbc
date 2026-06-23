@@ -63,6 +63,7 @@ export {
 } from './db/escalas.js';
 export {
   createProjeto,
+  updateProjeto,
   getProjetosDoLider,
   getProjeto,
   getAllProjetos,

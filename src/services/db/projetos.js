@@ -14,6 +14,10 @@ export async function createProjeto(data) {
   return docRef.id;
 }
 
+export async function updateProjeto(id, data) {
+  await updateDoc(doc(db, COLLECTIONS.PROJETOS, id), data);
+}
+
 
 export async function getProjetosDoLider(email) {
   const q = query(

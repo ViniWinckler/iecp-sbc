@@ -72,7 +72,8 @@ export async function createPublicacao(data) {
     Imagem_URL: data.Imagem_URL || '',
     Data_Evento: data.Data_Evento ? Timestamp.fromDate(new Date(data.Data_Evento)) : null,
     Data_Publicacao: serverTimestamp(),
-    Criado_Por_Email: data.Criado_Por_Email
+    Criado_Por_Email: data.Criado_Por_Email,
+    Autor_Nome: data.Autor_Nome || data.Criado_Por_Email
   });
   return { id: docRef.id, ...data };
 }

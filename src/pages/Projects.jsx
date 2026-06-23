@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/AuthContext";
-import { FolderKanban, Plus, CheckCircle2, Circle, AlertTriangle, ArrowRight } from "lucide-react";
+import { 
+  FolderKanban, Plus, AlertTriangle, ArrowRight, MoreVertical, 
+  Trash2, Edit, ImagePlus, Loader2, ArrowLeft, LayoutList, CheckCircle2
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -10,11 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/components/ui/use-toast";
-import { motion } from "framer-motion";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   getAllProjetos, 
-  createProjeto, 
+  createProjeto,
+  updateProjeto,
+  deleteProjeto,
   getTarefasPorProjeto, 
   createTarefa, 
   updateTarefaStatus, 
@@ -22,6 +28,11 @@ import {
   getMinisterios,
   getMinisteriosDoUsuario
 } from "@/services/db";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+const CATEGORIAS = [
+  "Evento", "Manutenção", "Culto Especial", "Treinamento", "Construção / Obra", "Outros"
+];
 
 export default function Projects() {
   const { userProfile, user } = useAuth();
@@ -30,19 +41,22 @@ export default function Projects() {
   const [ministries, setMinistries] = useState([]);
   const [myMinistries, setMyMinistries] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const [showTicket, setShowTicket] = useState(false);
+  
+  const [showForm, setShowForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   
   const isAdminOrPastor = userProfile?.Nivel_Acesso === "Admin" || userProfile?.Nivel_Acesso === "Pastor";
   const isLeader = isAdminOrPastor || userProfile?.Nivel_Acesso === "Lider";
 
+  // Form State
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newMinistryId, setNewMinistryId] = useState("");
-
-  const [ticketTitle, setTicketTitle] = useState("");
-  const [ticketDesc, setTicketDesc] = useState("");
-  const [ticketProjectId, setTicketProjectId] = useState("");
+  const [newCategory, setNewCategory] = useState("Outros");
+  const [imageFile, setImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => { 
     if (userProfile) loadData(); 
@@ -60,59 +74,87 @@ export default function Projects() {
       setMinistries(allMinistries);
       setMyMinistries(myMin);
       
-      // Load tasks for all projects
       const tasksPromises = allProjects.map(p => getTarefasPorProjeto(p.id));
       const allTasksArrays = await Promise.all(tasksPromises);
-      const flattenedTasks = allTasksArrays.flat();
-      setTasks(flattenedTasks);
+      setTasks(allTasksArrays.flat());
     } catch (err) {
-      console.error("Erro ao carregar projetos:", err);
-      toast({ title: "Erro ao carregar dados", variant: "destructive" });
+      console.error(err);
+      toast.error("Erro ao carregar dados");
     }
   };
 
   const getProjectTasks = (projectId) => tasks.filter((t) => t.ID_Projeto === projectId);
-  const getProgress = (projectId) => {
-    const project = projects.find(p => p.id === projectId);
-    return project?.Progresso || 0;
+  
+  const openCreate = () => {
+    setIsEditing(false); setEditingId(null);
+    setNewName(""); setNewDesc(""); setNewMinistryId("");
+    setNewCategory("Outros"); setImageFile(null); setPreviewUrl("");
+    setShowForm(true);
   };
 
-  const handleCreateProject = async () => {
-    if (!newName) { toast({ title: "Nome obrigatório", variant: "destructive" }); return; }
-    const ministry = ministries.find((m) => m.id === newMinistryId);
+  const openEdit = (p, e) => {
+    e.stopPropagation();
+    setIsEditing(true); setEditingId(p.id);
+    setNewName(p.Nome || ""); setNewDesc(p.Descricao || ""); 
+    setNewMinistryId(p.ID_Ministerio || ""); setNewCategory(p.Categoria || "Outros");
+    setImageFile(null); setPreviewUrl(p.Imagem_URL || "");
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm("Deseja realmente apagar este projeto?")) return;
     try {
-      await createProjeto({
+      await deleteProjeto(id);
+      toast.success("Projeto apagado.");
+      if (selectedProject?.id === id) setSelectedProject(null);
+      loadData();
+    } catch (error) {
+      toast.error("Erro ao apagar projeto.");
+    }
+  };
+
+  const handleSaveProject = async () => {
+    if (!newName) { toast.error("Nome obrigatório"); return; }
+    setIsSubmitting(true);
+    try {
+      let finalImageUrl = previewUrl; // Use existing if editing
+      
+      if (imageFile) {
+        const storage = getStorage();
+        const fileRef = ref(storage, `projetos/${Date.now()}_${imageFile.name}`);
+        const snap = await uploadBytes(fileRef, imageFile);
+        finalImageUrl = await getDownloadURL(snap.ref);
+      }
+
+      const ministry = ministries.find((m) => m.id === newMinistryId);
+      const data = {
         Nome: newName,
         Descricao: newDesc,
         ID_Ministerio: newMinistryId,
         Nome_Ministerio: ministry?.Nome || "",
+        Categoria: newCategory,
+        Imagem_URL: finalImageUrl,
         Criado_Por: userProfile.Email,
-      });
-      setShowCreate(false);
-      setNewName(""); setNewDesc(""); setNewMinistryId("");
-      loadData();
-      toast({ title: "Projeto criado!" });
-    } catch (error) {
-      toast({ title: "Erro ao criar projeto", variant: "destructive" });
-    }
-  };
+      };
 
-  const handleCreateTicket = async () => {
-    if (!ticketTitle || !ticketProjectId) { toast({ title: "Preencha os campos", variant: "destructive" }); return; }
-    try {
-      await createTarefa({
-        ID_Projeto: ticketProjectId,
-        Titulo: ticketTitle,
-        Descricao: ticketDesc,
-        Tipo: "Chamado",
-        Criado_Por: userProfile.Email,
-      });
-      setShowTicket(false);
-      setTicketTitle(""); setTicketDesc(""); setTicketProjectId("");
+      if (isEditing) {
+        await updateProjeto(editingId, data);
+        toast.success("Projeto atualizado!");
+        if (selectedProject?.id === editingId) {
+          setSelectedProject({ ...selectedProject, ...data });
+        }
+      } else {
+        await createProjeto(data);
+        toast.success("Projeto criado!");
+      }
+      setShowForm(false);
       loadData();
-      toast({ title: "Chamado aberto!" });
     } catch (error) {
-      toast({ title: "Erro ao abrir chamado", variant: "destructive" });
+      console.error(error);
+      toast.error("Erro ao salvar projeto");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -123,7 +165,7 @@ export default function Projects() {
       await autoUpdateProjectProgress(task.ID_Projeto);
       loadData();
     } catch (error) {
-      toast({ title: "Erro ao atualizar tarefa", variant: "destructive" });
+      toast.error("Erro ao atualizar tarefa");
     }
   };
 
@@ -131,122 +173,165 @@ export default function Projects() {
     if (!title) return;
     try {
       await createTarefa({ 
-        ID_Projeto: projectId, 
-        Titulo: title, 
-        Tipo: "Tarefa",
-        Criado_Por: userProfile.Email
+        ID_Projeto: projectId, Titulo: title, Tipo: "Tarefa", Criado_Por: userProfile.Email
       });
       await autoUpdateProjectProgress(projectId);
       loadData();
     } catch (error) {
-      toast({ title: "Erro ao adicionar tarefa", variant: "destructive" });
+      toast.error("Erro ao adicionar tarefa");
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="font-heading text-2xl font-bold">Projetos</h1>
-        <div className="flex gap-2">
-          <Dialog open={showTicket} onOpenChange={setShowTicket}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2"><AlertTriangle className="w-4 h-4" /> Abrir Chamado</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle className="font-heading">Abrir Chamado</DialogTitle></DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div>
-                  <Label>Projeto</Label>
-                  <Select value={ticketProjectId} onValueChange={setTicketProjectId}>
-                    <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      {projects.map((p) => (<SelectItem key={p.id} value={p.id}>{p.Nome}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Problema</Label>
-                  <Input value={ticketTitle} onChange={(e) => setTicketTitle(e.target.value)} placeholder="Ex: Microfone 2 falhando" className="mt-1" />
-                </div>
-                <div>
-                  <Label>Detalhes</Label>
-                  <Textarea value={ticketDesc} onChange={(e) => setTicketDesc(e.target.value)} className="mt-1" />
-                </div>
-                <Button onClick={handleCreateTicket} className="w-full">Abrir Chamado</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-          {isLeader && (
-            <Dialog open={showCreate} onOpenChange={setShowCreate}>
-              <DialogTrigger asChild>
-                <Button className="gap-2"><Plus className="w-4 h-4" /> Novo Projeto</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle className="font-heading">Criar Projeto</DialogTitle></DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <div>
-                    <Label>Nome</Label>
-                    <Input value={newName} onChange={(e) => setNewName(e.target.value)} className="mt-1" />
-                  </div>
-                  <div>
-                    <Label>Descrição</Label>
-                    <Textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="mt-1" />
-                  </div>
-                  <div>
-                    <Label>Ministério</Label>
-                    <Select value={newMinistryId} onValueChange={setNewMinistryId}>
-                      <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent>
-                        {(isAdminOrPastor ? ministries : myMinistries).map((m) => (<SelectItem key={m.id} value={m.id}>{m.Nome}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button onClick={handleCreateProject} className="w-full">Criar Projeto</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl font-bold">Projetos & Tarefas</h1>
+          <p className="text-muted-foreground text-sm">Gerencie o avanço dos ministérios.</p>
         </div>
+        
+        {isLeader && (
+          <Button onClick={openCreate} className="gap-2 shrink-0">
+            <Plus className="w-4 h-4" /> Novo Projeto
+          </Button>
+        )}
       </div>
+
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="font-heading">{isEditing ? "Editar Projeto" : "Criar Projeto"}</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <Label>Capa do Projeto</Label>
+              <div 
+                className="relative h-32 rounded-lg border-2 border-dashed border-border hover:border-primary/50 transition-colors flex flex-col items-center justify-center bg-muted/30 overflow-hidden group cursor-pointer"
+              >
+                {previewUrl ? (
+                  <>
+                    <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <ImagePlus className="w-6 h-6 text-white" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center text-muted-foreground">
+                    <ImagePlus className="w-8 h-8 mb-2 opacity-50" />
+                    <span className="text-sm">Clique para alterar a capa</span>
+                  </div>
+                )}
+                <input 
+                  type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={(e) => {
+                    const f = e.target.files[0];
+                    if(f) { setImageFile(f); setPreviewUrl(URL.createObjectURL(f)); }
+                  }}
+                />
+              </div>
+            </div>
+
+            <div><Label>Nome do Projeto</Label><Input value={newName} onChange={e => setNewName(e.target.value)} /></div>
+            <div><Label>Descrição</Label><Textarea value={newDesc} onChange={e => setNewDesc(e.target.value)} rows={3} /></div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Categoria</Label>
+                <Select value={newCategory} onValueChange={setNewCategory}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIAS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Ministério Responsável</Label>
+                <Select value={newMinistryId} onValueChange={setNewMinistryId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {(isAdminOrPastor ? ministries : myMinistries).map(m => (<SelectItem key={m.id} value={m.id}>{m.Nome}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <Button onClick={handleSaveProject} disabled={isSubmitting} className="w-full mt-4">
+              {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isEditing ? "Salvar Alterações" : "Criar Projeto"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {selectedProject ? (
         <ProjectDetail
           project={selectedProject}
           tasks={getProjectTasks(selectedProject.id)}
-          progress={getProgress(selectedProject.id)}
           onBack={() => setSelectedProject(null)}
           onToggleTask={toggleTask}
           onAddTask={handleAddTask}
           isLeader={isAdminOrPastor || myMinistries.some(m => m.id === selectedProject.ID_Ministerio)}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.length === 0 ? (
-            <div className="col-span-full text-center py-16 text-muted-foreground">
-              <FolderKanban className="w-12 h-12 mx-auto mb-4 opacity-40" />
-              <p className="text-lg">Nenhum projeto encontrado</p>
+            <div className="col-span-full flex flex-col items-center py-20 text-muted-foreground bg-card border border-dashed rounded-xl">
+              <FolderKanban className="w-16 h-16 mb-4 opacity-20" />
+              <p className="text-lg font-medium">Nenhum projeto encontrado</p>
+              <p className="text-sm opacity-70">Crie o primeiro projeto para começar.</p>
             </div>
           ) : (
-            projects.map((project, i) => (
-              <motion.div
-                key={project.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                onClick={() => setSelectedProject(project)}
-                className="bg-card border border-border rounded-xl p-5 cursor-pointer hover:border-accent/30 hover:shadow-md transition-all"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-heading font-semibold">{project.Nome}</h3>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </div>
-                {project.Nome_Ministerio && (
-                  <Badge variant="secondary" className="text-xs mb-3">{project.Nome_Ministerio}</Badge>
-                )}
-                <Progress value={getProgress(project.id)} className="h-2 mb-2" />
-                <p className="text-sm text-muted-foreground">{getProgress(project.id)}% concluído</p>
-              </motion.div>
-            ))
+            <AnimatePresence>
+              {projects.map((p, i) => (
+                <motion.div
+                  key={p.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
+                  onClick={() => setSelectedProject(p)}
+                  className="bg-card border border-border rounded-xl overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary/30 transition-all flex flex-col group"
+                >
+                  <div className="relative h-32 bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                    {p.Imagem_URL ? (
+                      <img src={p.Imagem_URL} alt={p.Nome} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <FolderKanban className="w-10 h-10 text-muted-foreground/30" />
+                    )}
+                    <div className="absolute top-3 left-3 flex gap-2">
+                      {p.Categoria && <Badge className="bg-black/60 hover:bg-black/80 backdrop-blur-sm border-none text-white">{p.Categoria}</Badge>}
+                      {p.Nome_Ministerio && <Badge className="bg-primary/80 hover:bg-primary backdrop-blur-sm border-none text-white">{p.Nome_Ministerio}</Badge>}
+                    </div>
+                    
+                    {/* Ações Rápidas */}
+                    {(isAdminOrPastor || p.Criado_Por === userProfile.Email) && (
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
+                            <Button size="icon" variant="secondary" className="w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white border-none">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => openEdit(p, e)}><Edit className="w-4 h-4 mr-2" /> Editar</DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => handleDelete(p.id, e)} className="text-red-500"><Trash2 className="w-4 h-4 mr-2" /> Apagar</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="font-heading font-bold text-lg mb-1 leading-tight line-clamp-1">{p.Nome}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">{p.Descricao || "Sem descrição..."}</p>
+                    
+                    <div className="mt-auto">
+                      <div className="flex justify-between items-end mb-2">
+                        <span className="text-xs font-semibold text-muted-foreground">Progresso</span>
+                        <span className="text-xs font-bold text-primary">{p.Progresso || 0}%</span>
+                      </div>
+                      <Progress value={p.Progresso || 0} className="h-2 bg-muted" />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           )}
         </div>
       )}
@@ -254,76 +339,139 @@ export default function Projects() {
   );
 }
 
-function ProjectDetail({ project, tasks, progress, onBack, onToggleTask, onAddTask, isLeader }) {
+// ─────────────────────────────────────────────────────────
+// Project Detail View (Kanban / Columns)
+// ─────────────────────────────────────────────────────────
+function ProjectDetail({ project, tasks, onBack, onToggleTask, onAddTask, isLeader }) {
   const [newTask, setNewTask] = useState("");
-  const taskItems = tasks.filter((t) => t.Tipo === "Tarefa");
-  const tickets = tasks.filter((t) => t.Tipo === "Chamado");
+  const taskItems = tasks.filter(t => t.Tipo === "Tarefa");
+  const tickets = tasks.filter(t => t.Tipo === "Chamado");
+
+  const pendingTasks = taskItems.filter(t => t.Status !== "Concluido");
+  const completedTasks = taskItems.filter(t => t.Status === "Concluido");
 
   return (
-    <div className="space-y-6">
-      <button onClick={onBack} className="text-sm text-primary hover:underline">← Voltar aos projetos</button>
-      <div className="bg-card border border-border rounded-xl p-6">
-        <h2 className="font-heading text-xl font-bold mb-2">{project.Nome}</h2>
-        {project.Descricao && <p className="text-muted-foreground mb-4">{project.Descricao}</p>}
-        {project.Nome_Ministerio && <Badge variant="secondary" className="mb-4">{project.Nome_Ministerio}</Badge>}
-        <Progress value={progress} className="h-3 mb-2" />
-        <p className="text-sm text-muted-foreground">{progress}% concluído</p>
-      </div>
-
-      <div className="bg-card border border-border rounded-xl p-5">
-        <h3 className="font-heading font-semibold mb-4">Tarefas</h3>
-        <div className="space-y-2">
-          {taskItems.map((task) => (
-            <div key={task.id} className="flex items-center gap-3 py-2">
-              <Checkbox
-                checked={task.Status === "Concluido"}
-                disabled={!isLeader}
-                onCheckedChange={() => onToggleTask(task)}
-              />
-              <span className={`text-sm ${task.Status === "Concluido" ? "line-through text-muted-foreground" : ""}`}>
-                {task.Titulo}
-              </span>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      
+      {/* Header Banner */}
+      <div className="relative rounded-2xl overflow-hidden bg-card border border-border">
+        {project.Imagem_URL ? (
+          <div className="h-48 md:h-64 relative w-full">
+            <img src={project.Imagem_URL} alt="Capa" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            <Button onClick={onBack} variant="secondary" size="sm" className="absolute top-4 left-4 bg-black/40 text-white border-none hover:bg-black/60 backdrop-blur-md">
+              <ArrowLeft className="w-4 h-4 mr-1.5" /> Voltar
+            </Button>
+            <div className="absolute bottom-6 left-6 right-6">
+              <div className="flex flex-wrap gap-2 mb-3">
+                {project.Categoria && <Badge className="bg-accent text-accent-foreground border-none">{project.Categoria}</Badge>}
+                {project.Nome_Ministerio && <Badge className="bg-primary text-primary-foreground border-none">{project.Nome_Ministerio}</Badge>}
+              </div>
+              <h2 className="font-heading text-3xl md:text-4xl font-bold text-white mb-2">{project.Nome}</h2>
+              <p className="text-white/80 line-clamp-2 max-w-3xl text-sm md:text-base">{project.Descricao}</p>
             </div>
-          ))}
-        </div>
-        {isLeader && (
-          <div className="flex gap-2 mt-4">
-            <Input
-              placeholder="Nova tarefa..."
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  onAddTask(project.id, newTask);
-                  setNewTask("");
-                }
-              }}
-            />
-            <Button onClick={() => { onAddTask(project.id, newTask); setNewTask(""); }}>Adicionar</Button>
+          </div>
+        ) : (
+          <div className="p-6 md:p-8">
+            <Button onClick={onBack} variant="outline" size="sm" className="mb-6">
+              <ArrowLeft className="w-4 h-4 mr-1.5" /> Voltar aos projetos
+            </Button>
+            <div className="flex gap-2 mb-3">
+              {project.Categoria && <Badge variant="secondary">{project.Categoria}</Badge>}
+              {project.Nome_Ministerio && <Badge variant="default">{project.Nome_Ministerio}</Badge>}
+            </div>
+            <h2 className="font-heading text-3xl font-bold mb-2">{project.Nome}</h2>
+            <p className="text-muted-foreground max-w-3xl">{project.Descricao}</p>
           </div>
         )}
-      </div>
-
-      {tickets.length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-5">
-          <h3 className="font-heading font-semibold mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-orange-500" /> Chamados
-          </h3>
-          <div className="space-y-2">
-            {tickets.map((ticket) => (
-              <div key={ticket.id} className="flex items-center justify-between bg-muted rounded-lg px-3 py-2.5">
-                <div>
-                  <p className="text-sm font-medium">{ticket.Titulo}</p>
-                  {ticket.Descricao && <p className="text-xs text-muted-foreground">{ticket.Descricao}</p>}
-                </div>
-                <Badge variant={ticket.Status === "Concluido" ? "default" : "secondary"}>
-                  {ticket.Status === "Concluido" ? "Resolvido" : ticket.Status === "Em Progresso" ? "Em andamento" : "Aberto"}
-                </Badge>
-              </div>
-            ))}
+        
+        <div className="bg-muted/50 p-4 border-t border-border flex items-center gap-4">
+          <div className="flex-1 max-w-md">
+            <div className="flex justify-between text-sm mb-1.5 font-medium">
+              <span>Progresso Geral</span>
+              <span className="text-primary">{project.Progresso || 0}%</span>
+            </div>
+            <Progress value={project.Progresso || 0} className="h-2" />
           </div>
         </div>
-      )}
-    </div>
+      </div>
+
+      {/* Columns Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        
+        {/* Column 1: Tarefas Pendentes */}
+        <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-5 pb-3 border-b border-border">
+            <LayoutList className="w-5 h-5 text-primary" />
+            <h3 className="font-heading font-semibold text-lg">Para Fazer</h3>
+            <Badge variant="secondary" className="ml-auto">{pendingTasks.length}</Badge>
+          </div>
+          
+          <div className="space-y-3">
+            {pendingTasks.map(task => (
+              <div key={task.id} className="group flex items-start gap-3 p-3 bg-muted/40 rounded-lg border border-border/50 hover:border-primary/30 transition-colors">
+                <Checkbox checked={false} disabled={!isLeader} onCheckedChange={() => onToggleTask(task)} className="mt-0.5" />
+                <span className="text-sm font-medium leading-tight pt-0.5">{task.Titulo}</span>
+              </div>
+            ))}
+            {pendingTasks.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhuma tarefa pendente.</p>}
+          </div>
+
+          {isLeader && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <Label className="text-xs text-muted-foreground mb-2 block">Adicionar Tarefa</Label>
+              <div className="flex gap-2">
+                <Input placeholder="O que precisa ser feito?" value={newTask} onChange={e => setNewTask(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { onAddTask(project.id, newTask); setNewTask(""); } }} />
+                <Button onClick={() => { onAddTask(project.id, newTask); setNewTask(""); }}>Add</Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Column 2: Tarefas Concluídas & Chamados */}
+        <div className="space-y-6">
+          
+          <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-5 pb-3 border-b border-border">
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <h3 className="font-heading font-semibold text-lg">Concluídas</h3>
+              <Badge variant="secondary" className="ml-auto">{completedTasks.length}</Badge>
+            </div>
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              {completedTasks.map(task => (
+                <div key={task.id} className="flex items-start gap-3 p-2 opacity-60 hover:opacity-100 transition-opacity">
+                  <Checkbox checked={true} disabled={!isLeader} onCheckedChange={() => onToggleTask(task)} className="mt-0.5 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500" />
+                  <span className="text-sm line-through pt-0.5">{task.Titulo}</span>
+                </div>
+              ))}
+              {completedTasks.length === 0 && <p className="text-sm text-muted-foreground text-center py-2">Nada concluído ainda.</p>}
+            </div>
+          </div>
+
+          {tickets.length > 0 && (
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm border-l-4 border-l-orange-500">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                <h3 className="font-heading font-semibold text-lg">Chamados Ativos</h3>
+              </div>
+              <div className="space-y-3">
+                {tickets.map(ticket => (
+                  <div key={ticket.id} className="bg-muted rounded-lg px-4 py-3">
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="font-medium text-sm">{ticket.Titulo}</p>
+                      <Badge variant={ticket.Status === "Concluido" ? "outline" : "destructive"} className="text-[10px] h-5">
+                        {ticket.Status}
+                      </Badge>
+                    </div>
+                    {ticket.Descricao && <p className="text-xs text-muted-foreground">{ticket.Descricao}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+        </div>
+      </div>
+    </motion.div>
   );
 }

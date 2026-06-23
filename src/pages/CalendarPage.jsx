@@ -29,7 +29,7 @@ const typeLabels = {
 };
 
 export default function CalendarPage() {
-  const { userProfile } = useAuth();
+  const { userProfile, user } = useAuth();
   const [events, setEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(moment());
   const [filter, setFilter] = useState("all");
@@ -89,7 +89,8 @@ export default function CalendarPage() {
         Escopo: newMinistryId ? "Ministerio" : "Global",
         ID_Ministerio_Alvo: newMinistryId || "",
         Mensagem: newDescription,
-        Criado_Por_Email: userProfile.Email
+        Criado_Por_Email: userProfile.Email,
+        Autor_Nome: userProfile?.Nome_Exibicao || user?.displayName || userProfile.Email?.split('@')[0] || "Membro"
       });
       setShowCreate(false);
       setNewTitle("");
