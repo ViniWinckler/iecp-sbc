@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Calendar, ListChecks, FolderKanban, Megaphone,
-  Users, Settings, LogOut, Menu, Church
+  Users, Settings, LogOut, Menu, Church, User
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -156,6 +156,13 @@ export default function InternalLayout() {
             <p className="text-xs text-sidebar-foreground/50">{role}</p>
           </div>
         </div>
+        <Link
+          to="/perfil"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full mb-1"
+        >
+          <User className="w-4 h-4" />
+          Meu Perfil
+        </Link>
         <button
           onClick={() => logout()}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"

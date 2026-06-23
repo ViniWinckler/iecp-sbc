@@ -19,19 +19,22 @@ import {
   createTarefa, 
   updateTarefaStatus, 
   autoUpdateProjectProgress,
-  getMinisterios 
+  getMinisterios,
+  getMinisteriosDoUsuario
 } from "@/services/db";
 
 export default function Projects() {
-  const { userProfile } = useAuth();
+  const { userProfile, user } = useAuth();
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [ministries, setMinistries] = useState([]);
+  const [myMinistries, setMyMinistries] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showTicket, setShowTicket] = useState(false);
   
-  const isLeader = userProfile?.Nivel_Acesso === "Admin" || userProfile?.Nivel_Acesso === "Pastor" || userProfile?.Nivel_Acesso === "Lider";
+  const isAdminOrPastor = userProfile?.Nivel_Acesso === "Admin" || userProfile?.Nivel_Acesso === "Pastor";
+  const isLeader = isAdminOrPastor || userProfile?.Nivel_Acesso === "Lider";
 
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
@@ -47,12 +50,15 @@ export default function Projects() {
 
   const loadData = async () => {
     try {
-      const [allProjects, allMinistries] = await Promise.all([
+      const email = user?.email || userProfile?.Email;
+      const [allProjects, allMinistries, myMin] = await Promise.all([
         getAllProjetos(),
         getMinisterios(),
+        getMinisteriosDoUsuario(email),
       ]);
       setProjects(allProjects);
       setMinistries(allMinistries);
+      setMyMinistries(myMin);
       
       // Load tasks for all projects
       const tasksPromises = allProjects.map(p => getTarefasPorProjeto(p.id));
@@ -191,7 +197,7 @@ export default function Projects() {
                     <Select value={newMinistryId} onValueChange={setNewMinistryId}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {ministries.map((m) => (<SelectItem key={m.id} value={m.id}>{m.Nome}</SelectItem>))}
+                        {(isAdminOrPastor ? ministries : myMinistries).map((m) => (<SelectItem key={m.id} value={m.id}>{m.Nome}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -211,7 +217,7 @@ export default function Projects() {
           onBack={() => setSelectedProject(null)}
           onToggleTask={toggleTask}
           onAddTask={handleAddTask}
-          isLeader={isLeader}
+          isLeader={isAdminOrPastor || myMinistries.some(m => m.id === selectedProject.ID_Ministerio)}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

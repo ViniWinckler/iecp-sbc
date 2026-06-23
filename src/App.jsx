@@ -21,6 +21,7 @@ import Projects from './pages/Projects';
 import Announcements from './pages/Announcements';
 import Ministries from './pages/Ministries';
 import AdminPanel from './pages/AdminPanel';
+import Profile from './pages/Profile';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings } = useAuth();
@@ -55,6 +56,7 @@ const AuthenticatedApp = () => {
           <Route path="/calendario" element={<CalendarPage />} />
           <Route path="/projetos"   element={<Projects />} />
           <Route path="/avisos"     element={<Announcements />} />
+          <Route path="/perfil"     element={<Profile />} />
 
           {/* Ministérios — Líder ou superior */}
           <Route element={<ProtectedRoute requiredRole="Lider" />}>

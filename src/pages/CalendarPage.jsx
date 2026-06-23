@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import moment from "moment";
-import { getAgendaEventos, createAgendaEvento, getMinisterios, getPublicacoes } from "@/services/db";
+import { getAgendaEventos, getMinisterios } from "@/services/db";
+import { getPublicacoes, createPublicacao } from "@/services/db/eventos";
 
 const typeColors = {
   schedule: "bg-blue-100 text-blue-700 border-blue-200",
@@ -80,14 +81,15 @@ export default function CalendarPage() {
     }
     const ministry = ministries.find((m) => m.id === newMinistryId);
     try {
-      await createAgendaEvento({
+      await createPublicacao({
         Titulo: newTitle,
-        Data_Hora: newDate,
-        Tipo: newType,
-        ID_Ministerio: newMinistryId || "",
-        Nome_Ministerio: ministry?.Nome || "",
-        Descricao: newDescription,
-        Criado_Por: userProfile.Email
+        Data_Evento: newDate,
+        Tipo: newType === "rehearsal" ? "Ensaio" : newType === "meeting" ? "Reunião" : "Evento",
+        Visibilidade: "Interno",
+        Escopo: newMinistryId ? "Ministerio" : "Global",
+        ID_Ministerio_Alvo: newMinistryId || "",
+        Mensagem: newDescription,
+        Criado_Por_Email: userProfile.Email
       });
       setShowCreate(false);
       setNewTitle("");

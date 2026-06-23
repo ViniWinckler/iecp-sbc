@@ -25,8 +25,8 @@ import {
   getFuncoesByEscala,
   responderEscala
 } from "@/services/db/escalas";
-import { getMinisterios, getMembrosMinisterio } from "@/services/db";
-import toast from "react-hot-toast";
+import { getMinisterios, getMembrosMinisterio, getMinisteriosDoUsuario } from "@/services/db";
+import { toast } from "sonner";
 
 moment.locale("pt-br");
 
@@ -84,6 +84,7 @@ export default function Schedules() {
   const { user, userProfile } = useAuth();
   const [schedules, setSchedules]   = useState([]);
   const [ministries, setMinistries] = useState([]);
+  const [myMinistries, setMyMinistries] = useState([]);
   const [members, setMembers]       = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -98,20 +99,23 @@ export default function Schedules() {
   const [creating, setCreating] = useState(false);
   const [conflictWarnings, setConflictWarnings] = useState([]);
 
-  const isLeader = userProfile?.Role === "admin" || userProfile?.Role === "Admin" ||
-                   userProfile?.Role === "Lider" || userProfile?.Role === "Pastor";
+  const isAdminOrPastor = userProfile?.Nivel_Acesso === "Admin" || userProfile?.Nivel_Acesso === "Pastor" || userProfile?.Role === "admin";
+  const isLeader = isAdminOrPastor || userProfile?.Nivel_Acesso === "Lider" || userProfile?.Role === "Lider";
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [allSchedules, allMinistries] = await Promise.all([
+      const email = user?.email || userProfile?.Email;
+      const [allSchedules, allMinistries, myMin] = await Promise.all([
         getEscalas(),
         getMinisterios(),
+        getMinisteriosDoUsuario(email),
       ]);
       setSchedules(allSchedules);
       setMinistries(allMinistries);
+      setMyMinistries(myMin);
     } catch (e) {
       console.error(e);
       toast.error("Erro ao carregar escalas");
@@ -232,14 +236,14 @@ export default function Schedules() {
                 </div>
                 <div>
                   <Label>Ministério *</Label>
-                  <Select value={newMinistryId} onValueChange={setNewMinistryId}>
-                    <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      {ministries.map(m => (
-                        <SelectItem key={m.id} value={m.id}>{m.Nome || m.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Select value={newMinistryId} onValueChange={setNewMinistryId}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {(isAdminOrPastor ? ministries : myMinistries).map(m => (
+                          <SelectItem key={m.id} value={m.id}>{m.Nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                 </div>
 
                 {/* Slots */}
